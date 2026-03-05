@@ -30,6 +30,8 @@ class Direktur extends BaseController
         $data['pending_rincian'] = $this->perjalananModel->getByStatusWithUser(['processed_admin']);
         // Sudah diproses
         $data['processed']       = $this->perjalananModel->getByStatusWithUser(['approved_1', 'rejected_1', 'approved_2', 'rejected_2', 'sent_finance', 'completed']);
+        $ids = array_column($data['processed'], 'id');
+        $data['rejection_catatans'] = $this->logModel->getLastRejectionCatatanMap($ids);
         $data['title']           = 'Dashboard Direktur';
         return view('direktur/index', $data);
     }

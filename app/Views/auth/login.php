@@ -21,7 +21,7 @@
                 <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 p-2">
                     <img src="/image/logo techno medic.png" alt="Logo SPPD Jaldin" class="w-full h-full object-contain">
                 </div>
-                <h1 class="text-2xl font-bold">SPPD Jaldin</h1>
+                <h1 class="text-2xl font-bold">Perjalanan Dinas</h1>
                 <p class="text-primary-200 text-sm mt-1">Sistem Perjalanan Dinas Online</p>
             </div>
 
