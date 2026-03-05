@@ -169,6 +169,9 @@ $statusMap = [
                         <td class="px-5 py-3">
                             <?php $st = $statusMap[$p['status']] ?? ['label' => $p['status'], 'class' => 'bg-gray-100 text-gray-600']; ?>
                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold <?= $st['class'] ?>"><?= $st['label'] ?></span>
+                            <?php if (in_array($p['status'], ['rejected_1', 'rejected_2']) && ! empty($rejection_catatans[$p['id']])): ?>
+                            <p class="text-xs text-red-500 mt-1 italic"><i class="fas fa-comment-alt mr-1"></i><?= esc($rejection_catatans[$p['id']]) ?></p>
+                            <?php endif; ?>
                         </td>
                         <td class="px-5 py-3 font-semibold text-gray-700 text-xs">
                             <?= $p['total_pengajuan'] > 0 ? 'Rp ' . number_format($p['total_pengajuan'], 0, ',', '.') : '-' ?>

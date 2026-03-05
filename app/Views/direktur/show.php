@@ -40,6 +40,12 @@
                     <p class="text-gray-400 text-xs mb-1">Keperluan</p>
                     <p class="font-medium"><?= nl2br(esc($perjalanan['keperluan'])) ?></p>
                 </div>
+                <?php if (! empty($perjalanan['catatan'])): ?>
+                <div class="col-span-2 border-t border-gray-100 pt-3">
+                    <p class="text-gray-400 text-xs mb-1"><i class="fas fa-sticky-note mr-1"></i>Catatan / Itinerary</p>
+                    <pre class="text-sm text-gray-700 font-sans whitespace-pre-wrap"><?= esc($perjalanan['catatan']) ?></pre>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 

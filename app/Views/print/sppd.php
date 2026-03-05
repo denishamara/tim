@@ -284,9 +284,13 @@ function tglIndo($date) {
                 <td></td>
                 <td>
                     <?php
-                    $uraian = $r['keterangan'] ?: $r['uraian'];
-                    if (!empty($r['nama_kendaraan'])) {
-                        $uraian .= ' ' . $r['nama_kendaraan'] . ' ' . $r['nomor_polisi'];
+                    if (!empty($r['keterangan'])) {
+                        $uraian = $r['keterangan'];
+                    } else {
+                        $uraian = $r['uraian'];
+                        if (!empty($r['nama_kendaraan'])) {
+                            $uraian .= ' ' . $r['nama_kendaraan'] . ' ' . $r['nomor_polisi'];
+                        }
                     }
                     echo esc($uraian);
                     ?>

@@ -25,4 +25,23 @@ class ApprovalLogModel extends Model
         $builder->orderBy('al.approved_at', 'ASC');
         return $builder->get()->getResultArray();
     }
+
+    public function getLastRejectionCatatanMap(array $perjalananIds)
+    {
+        if (empty($perjalananIds)) return [];
+        $results = $this->db->table('approval_logs')
+            ->select('perjalanan_id, catatan, approved_at')
+            ->whereIn('perjalanan_id', $perjalananIds)
+            ->whereIn('status', ['rejected_1', 'rejected_2'])
+            ->orderBy('approved_at', 'DESC')
+            ->get()->getResultArray();
+
+        $map = [];
+        foreach ($results as $r) {
+            if (! isset($map[$r['perjalanan_id']])) {
+                $map[$r['perjalanan_id']] = $r['catatan'];
+            }
+        }
+        return $map;
+    }
 }
