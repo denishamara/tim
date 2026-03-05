@@ -10,6 +10,12 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/',      'Auth::login');
 $routes->get('/login', 'Auth::login');
 $routes->post('/login', 'Auth::loginPost');
+$routes->get('/register', 'Auth::register');
+$routes->post('/register', 'Auth::registerPost');
+$routes->get('/forgot-password', 'Auth::forgotPassword');
+$routes->post('/forgot-password', 'Auth::forgotPasswordPost');
+$routes->get('/reset-password/(:any)', 'Auth::resetPassword/$1');
+$routes->post('/reset-password', 'Auth::resetPasswordPost');
 $routes->get('/logout', 'Auth::logout');
 
 // Authenticated routes

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — SPPD Jaldin</title>
+    <title>Lupa Password — SPPD Jaldin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -21,8 +21,8 @@
                 <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 p-2">
                     <img src="/image/logo techno medic.png" alt="Logo SPPD Jaldin" class="w-full h-full object-contain">
                 </div>
-                <h1 class="text-2xl font-bold">SPPD Jaldin</h1>
-                <p class="text-primary-200 text-sm mt-1">Sistem Perjalanan Dinas Online</p>
+                <h1 class="text-2xl font-bold">Lupa Password</h1>
+                <p class="text-primary-200 text-sm mt-1">Reset password akun Anda</p>
             </div>
 
             <!-- Form -->
@@ -33,14 +33,29 @@
                         <?= session()->getFlashdata('error') ?>
                     </div>
                 <?php endif; ?>
+                
                 <?php if (session()->getFlashdata('success')): ?>
-                    <div class="flex items-center gap-2 bg-primary-50 border border-primary-200 text-primary-700 rounded-xl px-4 py-3 mb-5 text-sm">
-                        <i class="fas fa-check-circle"></i>
-                        <?= session()->getFlashdata('success') ?>
+                    <div class="bg-primary-50 border border-primary-200 text-primary-700 rounded-xl px-4 py-4 mb-5">
+                        <div class="flex items-center gap-2 text-sm font-semibold mb-3">
+                            <i class="fas fa-check-circle"></i>
+                            <?= session()->getFlashdata('success') ?>
+                        </div>
+                        <?php if (session()->getFlashdata('reset_link')): ?>
+                            <a href="<?= session()->getFlashdata('reset_link') ?>" 
+                               class="block w-full bg-white hover:bg-primary-100 border-2 border-primary-300 text-primary-700 font-semibold py-3 px-4 rounded-lg transition-all text-center text-sm">
+                                <i class="fas fa-link mr-2"></i>Klik untuk Reset Password
+                            </a>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
-                <form action="/login" method="POST">
+                <div class="mb-6">
+                    <p class="text-sm text-gray-600 text-center">
+                        Masukkan email Anda untuk mendapatkan link reset password.
+                    </p>
+                </div>
+
+                <form action="/forgot-password" method="POST">
                     <?= csrf_field() ?>
                     <div class="space-y-5">
                         <div>
@@ -52,57 +67,26 @@
                                     placeholder="email@perusahaan.com">
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-lock text-sm"></i></span>
-                                <input type="password" name="password" required
-                                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition"
-                                    placeholder="••••••••">
-                            </div>
-                            <div class="mt-2 text-right">
-                                <a href="/forgot-password" class="text-xs text-primary-600 hover:text-primary-700 font-semibold">
-                                    Lupa password?
-                                </a>
-                            </div>
-                        </div>
+                        
                         <button type="submit"
                             class="w-full bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-primary-200 text-sm">
-                            <i class="fas fa-sign-in-alt mr-2"></i> Masuk Sekarang
+                            <i class="fas fa-paper-plane mr-2"></i> Kirim Link Reset
                         </button>
                     </div>
                 </form>
 
-                <div class="mt-6 pt-6 border-t border-gray-100">
-                    <p class="text-sm text-center text-gray-600 mb-4">
+                <div class="mt-6 pt-6 border-t border-gray-100 space-y-3">
+                    <p class="text-sm text-center text-gray-600">
+                        <a href="/login" class="text-primary-600 hover:text-primary-700 font-semibold">
+                            <i class="fas fa-arrow-left mr-1"></i> Kembali ke Login
+                        </a>
+                    </p>
+                    <p class="text-sm text-center text-gray-600">
                         Belum punya akun? 
                         <a href="/register" class="text-primary-600 hover:text-primary-700 font-semibold">
                             Daftar di sini
                         </a>
                     </p>
-                    <p class="text-xs text-center text-gray-400 mb-3">Akun Demo</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <p class="font-semibold text-gray-600">Pegawai</p>
-                            <p>nizar@jaldin.com</p>
-                            <p>pegawai123</p>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <p class="font-semibold text-gray-600">Admin</p>
-                            <p>admin@jaldin.com</p>
-                            <p>admin123</p>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <p class="font-semibold text-gray-600">Direktur</p>
-                            <p>direktur@jaldin.com</p>
-                            <p>direktur123</p>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg p-2">
-                            <p class="font-semibold text-gray-600">Keuangan</p>
-                            <p>keuangan@jaldin.com</p>
-                            <p>keuangan123</p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
