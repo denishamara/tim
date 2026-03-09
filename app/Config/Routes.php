@@ -46,6 +46,11 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('kendaraan/store',             'Admin::kendaraanStore');
         $routes->get('kendaraan/toggle/(:num)',      'Admin::kendaraanToggle/$1');
         $routes->get('kendaraan/delete/(:num)',      'Admin::kendaraanDelete/$1');
+        // Jenis Biaya (master data)
+        $routes->get('jenis-biaya',                  'Admin::jenisBiaya');
+        $routes->post('jenis-biaya/store',           'Admin::jenisBiayaStore');
+        $routes->get('jenis-biaya/toggle/(:num)',    'Admin::jenisBiayaToggle/$1');
+        $routes->get('jenis-biaya/delete/(:num)',    'Admin::jenisBiayaDelete/$1');
     });
 
     // Direktur routes

@@ -61,20 +61,29 @@
             <form action="/admin/rincian/add/<?= $perjalanan['id'] ?>" method="POST" class="p-5 space-y-3">
                 <?= csrf_field() ?>
 
-                <!-- Row 1: Judul + Kendaraan -->
+                <!-- Row 1: Jenis Biaya + Kendaraan -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Biaya <span class="text-red-500">*</span></label>
-                        <select id="judulSelect" name="judul" required class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
-                            <option value="">-- Pilih Kategori --</option>
-                            <option value="Biaya Penginapan">Biaya Penginapan</option>
-                            <option value="Biaya Transportasi">Biaya Transportasi</option>
-                            <option value="BBM PP">BBM PP</option>
-                            <option value="BBM Dilokasi">BBM Dilokasi</option>
-                            <option value="Parkir">Parkir</option>
-                            <option value="Uang Makan">Uang Makan</option>
-                            <option value="Lainnya">Lainnya</option>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Biaya <span class="text-red-500">*</span></label>
+                        <select id="judulSelect" name="jenis_biaya_id" required
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                            <option value="">-- Pilih Jenis Biaya --</option>
+                            <?php foreach ($jenis_biaya as $jb): ?>
+                            <option value="<?= $jb['id'] ?>"
+                                data-nama="<?= esc($jb['nama']) ?>"
+                                data-satuan="<?= esc($jb['satuan_default']) ?>"
+                                data-harga="<?= $jb['harga_default'] ?>"
+                                data-kendaraan="<?= $jb['butuh_kendaraan'] ?>">
+                                <?= esc($jb['nama']) ?>
+                                <?php if ($jb['harga_default'] > 0): ?>
+                                    — Rp <?= number_format($jb['harga_default'], 0, ',', '.') ?>/<?= esc($jb['satuan_default']) ?>
+                                <?php endif; ?>
+                            </option>
+                            <?php endforeach; ?>
                         </select>
+                        <a href="/admin/jenis-biaya" class="text-xs text-primary-500 hover:underline mt-1 inline-block">
+                            <i class="fas fa-cog mr-0.5"></i> Kelola jenis biaya
+                        </a>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">
@@ -82,7 +91,8 @@
                             <span id="kendaraanRequired" class="text-red-500 hidden">*</span>
                             <span id="kendaraanOptional" class="text-gray-400">(jika ada)</span>
                         </label>
-                        <select id="kendaraanSelect" name="kendaraan_id" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                        <select id="kendaraanSelect" name="kendaraan_id"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
                             <option value="">-- Tanpa Kendaraan --</option>
                             <?php foreach ($kendaraan as $kid => $knama): ?>
                             <option value="<?= $kid ?>" data-nama="<?= esc($knama) ?>"><?= esc($knama) ?></option>
@@ -95,7 +105,7 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan / Uraian Detail <span class="text-red-500">*</span></label>
                     <input type="text" id="keteranganInput" name="keterangan" required
-                        placeholder="Pilih kategori terlebih dahulu..."
+                        placeholder="Pilih jenis biaya terlebih dahulu..."
                         class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
                 </div>
 
@@ -108,19 +118,21 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Satuan <span class="text-red-500">*</span></label>
-                        <select id="satuanSelect" name="satuan" required class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                        <select id="satuanSelect" name="satuan" required
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
                             <option value="Kali">Kali</option>
+                            <option value="Hari">Hari</option>
                             <option value="Malam">Malam</option>
                             <option value="PP">PP</option>
-                            <option value="Hari">Hari</option>
                             <option value="Liter">Liter</option>
+                            <option value="Km">Km</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Harga Satuan (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" name="harga" required min="0" step="500"
+                        <input type="number" id="hargaInput" name="harga" required min="0" step="500"
                             class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                            placeholder="175000">
+                            placeholder="0">
                     </div>
                 </div>
 
@@ -135,20 +147,9 @@
                 const kendaraanSel = document.getElementById('kendaraanSelect');
                 const keteranganIn = document.getElementById('keteranganInput');
                 const satuanSel    = document.getElementById('satuanSelect');
+                const hargaIn      = document.getElementById('hargaInput');
                 const kReq         = document.getElementById('kendaraanRequired');
                 const kOpt         = document.getElementById('kendaraanOptional');
-
-                const hints = {
-                    'Biaya Penginapan':  { ph: 'Contoh: Penginapan Cedors ov/Nizar', satuan: 'Malam' },
-                    'Biaya Transportasi':{ ph: 'Contoh: Tol Prambanan - Demak', satuan: 'Kali' },
-                    'BBM PP':            { ph: 'Pilih kendaraan → terisi otomatis', satuan: 'PP' },
-                    'BBM Dilokasi':      { ph: 'Pilih kendaraan → terisi otomatis', satuan: 'PP' },
-                    'Parkir':            { ph: 'Pilih kendaraan → terisi otomatis', satuan: 'Kali' },
-                    'Uang Makan':        { ph: 'Contoh: M. Nizar Zulmi Syaifullah', satuan: 'Kali' },
-                    'Lainnya':           { ph: 'Isi keterangan detail...', satuan: 'Kali' },
-                };
-
-                const isAutoFill = v => ['BBM PP','BBM Dilokasi','Parkir'].includes(v);
 
                 function setSatuan(val) {
                     for (let o of satuanSel.options) {
@@ -157,20 +158,30 @@
                 }
 
                 function fillFromKendaraan() {
-                    const judul = judulSel.value;
-                    if (!isAutoFill(judul)) return;
                     const opt = kendaraanSel.options[kendaraanSel.selectedIndex];
-                    keteranganIn.value = (opt && opt.value) ? (opt.dataset.nama || opt.text) : '';
-                    keteranganIn.dataset.auto = '1';
+                    if (opt && opt.value) {
+                        keteranganIn.value        = opt.dataset.nama || opt.text;
+                        keteranganIn.dataset.auto = '1';
+                    }
                 }
 
                 judulSel.addEventListener('change', function() {
-                    const val = this.value;
-                    const h   = hints[val] || { ph: 'Isi keterangan...', satuan: 'Kali' };
-                    keteranganIn.placeholder = h.ph;
-                    setSatuan(h.satuan);
+                    const opt = this.options[this.selectedIndex];
+                    if (!opt || !opt.value) return;
 
-                    if (isAutoFill(val)) {
+                    const satuan    = opt.dataset.satuan    || 'Kali';
+                    const harga     = opt.dataset.harga     || '0';
+                    const needKend  = opt.dataset.kendaraan === '1';
+
+                    setSatuan(satuan);
+
+                    // Set harga default if > 0
+                    if (parseFloat(harga) > 0) {
+                        hargaIn.value = harga;
+                    }
+
+                    // Kendaraan required toggle
+                    if (needKend) {
                         kReq.classList.remove('hidden');
                         kOpt.classList.add('hidden');
                         fillFromKendaraan();
@@ -178,13 +189,21 @@
                         kReq.classList.add('hidden');
                         kOpt.classList.remove('hidden');
                         if (keteranganIn.dataset.auto === '1') {
-                            keteranganIn.value = '';
+                            keteranganIn.value        = '';
                             keteranganIn.dataset.auto = '0';
                         }
+                        keteranganIn.placeholder = opt.dataset.nama
+                            ? 'Keterangan untuk ' + opt.dataset.nama + '...'
+                            : 'Isi keterangan detail...';
                     }
                 });
 
-                kendaraanSel.addEventListener('change', fillFromKendaraan);
+                kendaraanSel.addEventListener('change', function() {
+                    const jbOpt = judulSel.options[judulSel.selectedIndex];
+                    if (jbOpt && jbOpt.dataset.kendaraan === '1') {
+                        fillFromKendaraan();
+                    }
+                });
             })();
             </script>
         </div>

@@ -7,6 +7,7 @@ use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
 use App\Models\ApprovalLogModel;
 use App\Models\KendaraanModel;
+use App\Models\JenisBiayaModel;
 
 class Admin extends BaseController
 {
@@ -15,14 +16,16 @@ class Admin extends BaseController
     protected $dokumenModel;
     protected $logModel;
     protected $kendaraanModel;
+    protected $jenisBiayaModel;
 
     public function __construct()
     {
-        $this->perjalananModel = new PerjalananDinasModel();
-        $this->rincianModel    = new RincianBiayaModel();
-        $this->dokumenModel    = new DokumenPerjalananModel();
-        $this->logModel        = new ApprovalLogModel();
-        $this->kendaraanModel  = new KendaraanModel();
+        $this->perjalananModel  = new PerjalananDinasModel();
+        $this->rincianModel     = new RincianBiayaModel();
+        $this->dokumenModel     = new DokumenPerjalananModel();
+        $this->logModel         = new ApprovalLogModel();
+        $this->kendaraanModel   = new KendaraanModel();
+        $this->jenisBiayaModel  = new JenisBiayaModel();
     }
 
     public function index()
@@ -41,12 +44,13 @@ class Admin extends BaseController
             return redirect()->to('/admin')->with('error', 'Data tidak ditemukan.');
         }
 
-        $data['perjalanan'] = $perjalanan;
-        $data['dokumen']    = $this->dokumenModel->getByPerjalanan($id);
-        $data['rincian']    = $this->rincianModel->getByPerjalanan($id);
-        $data['logs']       = $this->logModel->getLogsByPerjalanan($id);
-        $data['kendaraan']  = $this->kendaraanModel->getDropdown();
-        $data['title']      = 'Detail & Proses Perjalanan';
+        $data['perjalanan']  = $perjalanan;
+        $data['dokumen']     = $this->dokumenModel->getByPerjalanan($id);
+        $data['rincian']     = $this->rincianModel->getByPerjalanan($id);
+        $data['logs']        = $this->logModel->getLogsByPerjalanan($id);
+        $data['kendaraan']   = $this->kendaraanModel->getDropdown();
+        $data['jenis_biaya'] = $this->jenisBiayaModel->getAktif();
+        $data['title']       = 'Detail & Proses Perjalanan';
         return view('admin/show', $data);
     }
 
@@ -57,20 +61,31 @@ class Admin extends BaseController
             return redirect()->to('/admin')->with('error', 'Tidak dapat menambah rincian biaya pada status ini.');
         }
 
-        $qty   = (float) $this->request->getPost('qty');
-        $harga = (float) str_replace(['Rp', '.', ' ', ','], ['', '', '', '.'], $this->request->getPost('harga'));
-        $total = $qty * $harga;
+        $qty          = (float) $this->request->getPost('qty');
+        $harga        = (float) str_replace(['Rp', '.', ' ', ','], ['', '', '', '.'], $this->request->getPost('harga'));
+        $total        = $qty * $harga;
+        $jenisBiayaId = (int) $this->request->getPost('jenis_biaya_id');
+
+        // Resolve judul and satuan from master data when jenis_biaya_id is provided
+        $judul  = $this->request->getPost('judul');
+        $satuan = $this->request->getPost('satuan');
+        if ($jenisBiayaId) {
+            $jenis  = $this->jenisBiayaModel->find($jenisBiayaId);
+            $judul  = $jenis['nama'] ?? $judul;
+            $satuan = $satuan ?: ($jenis['satuan_default'] ?? 'Kali');
+        }
 
         $this->rincianModel->insert([
-            'perjalanan_id' => $id,
-            'judul'         => $this->request->getPost('judul'),
-            'keterangan'    => $this->request->getPost('keterangan'),
-            'kendaraan_id'  => $this->request->getPost('kendaraan_id') ?: null,
-            'uraian'        => $this->request->getPost('keterangan'), // fallback for NOT NULL constraint
-            'qty'           => $qty,
-            'satuan'        => $this->request->getPost('satuan'),
-            'harga'         => $harga,
-            'total'         => $total,
+            'perjalanan_id'  => $id,
+            'jenis_biaya_id' => $jenisBiayaId ?: null,
+            'judul'          => $judul,
+            'keterangan'     => $this->request->getPost('keterangan'),
+            'kendaraan_id'   => $this->request->getPost('kendaraan_id') ?: null,
+            'uraian'         => $this->request->getPost('keterangan'), // fallback for NOT NULL constraint
+            'qty'            => $qty,
+            'satuan'         => $satuan,
+            'harga'          => $harga,
+            'total'          => $total,
         ]);
 
         return redirect()->to('/admin/show/' . $id)->with('success', 'Rincian biaya ditambahkan.');
@@ -158,5 +173,61 @@ class Admin extends BaseController
     {
         $this->kendaraanModel->delete($id);
         return redirect()->to('/admin/kendaraan')->with('success', 'Kendaraan dihapus.');
+    }
+
+    // ─── Jenis Biaya Management ────────────────────────────────────────────────
+
+    public function jenisBiaya()
+    {
+        $data['list']  = $this->jenisBiayaModel->orderBy('nama', 'ASC')->findAll();
+        $data['title'] = 'Master Jenis Biaya';
+        return view('admin/jenis_biaya', $data);
+    }
+
+    public function jenisBiayaStore()
+    {
+        $rules = [
+            'nama'           => 'required|max_length[150]',
+            'satuan_default' => 'required',
+            'harga_default'  => 'required|decimal',
+        ];
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $id = (int) $this->request->getPost('id');
+        $payload = [
+            'nama'            => $this->request->getPost('nama'),
+            'satuan_default'  => $this->request->getPost('satuan_default'),
+            'harga_default'   => (float) str_replace(['.', ','], ['', '.'], $this->request->getPost('harga_default')),
+            'keterangan'      => $this->request->getPost('keterangan'),
+            'butuh_kendaraan' => $this->request->getPost('butuh_kendaraan') ? 1 : 0,
+        ];
+
+        if ($id) {
+            $this->jenisBiayaModel->update($id, $payload);
+            $msg = 'Jenis biaya berhasil diperbarui.';
+        } else {
+            $payload['aktif'] = 1;
+            $this->jenisBiayaModel->insert($payload);
+            $msg = 'Jenis biaya berhasil ditambahkan.';
+        }
+
+        return redirect()->to('/admin/jenis-biaya')->with('success', $msg);
+    }
+
+    public function jenisBiayaToggle($id)
+    {
+        $j = $this->jenisBiayaModel->find($id);
+        if ($j) {
+            $this->jenisBiayaModel->update($id, ['aktif' => $j['aktif'] ? 0 : 1]);
+        }
+        return redirect()->to('/admin/jenis-biaya')->with('success', 'Status jenis biaya diperbarui.');
+    }
+
+    public function jenisBiayaDelete($id)
+    {
+        $this->jenisBiayaModel->delete($id);
+        return redirect()->to('/admin/jenis-biaya')->with('success', 'Jenis biaya dihapus.');
     }
 }

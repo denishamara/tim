@@ -79,6 +79,9 @@
                 <a href="/admin/kendaraan" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all <?= str_contains(current_url(), '/kendaraan') ? 'active' : '' ?>">
                     <i class="fas fa-car w-5 text-center text-primary-300"></i> Data Kendaraan
                 </a>
+                <a href="/admin/jenis-biaya" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all <?= str_contains(current_url(), '/jenis-biaya') ? 'active' : '' ?>">
+                    <i class="fas fa-tags w-5 text-center text-primary-300"></i> Master Jenis Biaya
+                </a>
             <?php endif; ?>
 
             <?php if ($role === 'direktur'): ?>
