@@ -8,6 +8,18 @@ $statusMap = [
 ];
 ?>
 
+<!-- Page Header with Navigation -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Dashboard Keuangan</h1>
+        <p class="text-sm text-gray-500 mt-1">Kelola pencatatan dana operasional</p>
+    </div>
+    <a href="<?= site_url('keuangan/laporan') ?>" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition flex items-center gap-2">
+        <i class="fas fa-chart-bar"></i>
+        Laporan Keuangan
+    </a>
+</div>
+
 <!-- Stats -->
 <div class="grid grid-cols-2 gap-4 mb-6">
     <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">

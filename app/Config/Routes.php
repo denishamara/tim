@@ -66,5 +66,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->get('',                   'Keuangan::index');
         $routes->get('show/(:num)',        'Keuangan::show/$1');
         $routes->post('complete/(:num)',   'Keuangan::complete/$1');
+        $routes->get('laporan',            'Keuangan::laporan');
+        $routes->get('exportPdf',          'Keuangan::exportPdf');
+        $routes->get('exportExcel',        'Keuangan::exportExcel');
     });
 });
