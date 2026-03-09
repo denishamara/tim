@@ -6,6 +6,7 @@ use App\Models\PerjalananDinasModel;
 use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
 use App\Models\ApprovalLogModel;
+use App\Models\JenisBiayaModel;
 
 class Keuangan extends BaseController
 {
@@ -14,14 +15,16 @@ class Keuangan extends BaseController
     protected $dokumenModel;
     protected $logModel;
     protected $db;
+    protected $jenisBiayaModel;
 
     public function __construct()
     {
-        $this->perjalananModel = new PerjalananDinasModel();
-        $this->rincianModel    = new RincianBiayaModel();
-        $this->dokumenModel    = new DokumenPerjalananModel();
-        $this->logModel        = new ApprovalLogModel();
-        $this->db              = \Config\Database::connect();
+        $this->perjalananModel  = new PerjalananDinasModel();
+        $this->rincianModel     = new RincianBiayaModel();
+        $this->dokumenModel     = new DokumenPerjalananModel();
+        $this->logModel         = new ApprovalLogModel();
+        $this->db               = \Config\Database::connect();
+        $this->jenisBiayaModel  = new JenisBiayaModel();
     }
 
     public function index()
@@ -76,10 +79,11 @@ class Keuangan extends BaseController
     public function laporan()
     {
         // Get filter parameters from request
-        $startDate = $this->request->getGet('start_date') ?? date('Y-m-01'); // First day of current month
-        $endDate   = $this->request->getGet('end_date') ?? date('Y-m-d');     // Today
-        $status    = $this->request->getGet('status') ?? 'all';
-        $userId    = $this->request->getGet('user_id') ?? null;
+        $startDate   = $this->request->getGet('start_date')    ?? date('Y-m-01');
+        $endDate     = $this->request->getGet('end_date')      ?? date('Y-m-d');
+        $status      = $this->request->getGet('status')        ?? 'all';
+        $userId      = $this->request->getGet('user_id')       ?? null;
+        $jenisBiayaId = $this->request->getGet('jenis_biaya_id') ?? null;
 
         // Build query with filters
         $builder = $this->db->table('perjalanan_dinas pd');
@@ -96,49 +100,57 @@ class Keuangan extends BaseController
             $builder->where('pd.user_id', $userId);
         }
 
+        // When filtering by jenis biaya, only include perjalanan that have at least one matching rincian
+        if ($jenisBiayaId) {
+            $builder->whereIn('pd.id', function ($subQuery) use ($jenisBiayaId) {
+                $subQuery->select('perjalanan_id')
+                         ->from('rincian_biaya')
+                         ->where('jenis_biaya_id', $jenisBiayaId);
+            });
+        }
+
         $builder->orderBy('pd.tanggal_berangkat', 'DESC');
         $perjalanan = $builder->get()->getResultArray();
 
         // Calculate statistics
-        $totalPerjalanan = count($perjalanan);
-        $totalBiaya = 0;
-        $biayaPerStatus = [];
-        $biayaPerJenis = [];
+        $totalBiaya      = 0;
+        $biayaPerStatus  = [];
+        $biayaPerJenis   = [];
 
         foreach ($perjalanan as &$p) {
-            // Get rincian biaya for each perjalanan
-            $rincian = $this->rincianModel->getByPerjalanan($p['id']);
+            $rincian  = $this->rincianModel->getByPerjalanan($p['id']);
             $p['rincian'] = $rincian;
-            
+
             $subtotal = 0;
             foreach ($rincian as $r) {
-                $subtotal += $r['total'];
-                
-                // Group by jenis biaya
-                $jenisNama = $r['nama_jenis_biaya'] ?? 'Lainnya';
-                if (!isset($biayaPerJenis[$jenisNama])) {
-                    $biayaPerJenis[$jenisNama] = 0;
+                // Apply jenis biaya filter to cost aggregation
+                if ($jenisBiayaId && $r['jenis_biaya_id'] != $jenisBiayaId) {
+                    continue;
                 }
-                $biayaPerJenis[$jenisNama] += $r['total'];
+
+                $subtotal += $r['total'];
+
+                $jenisNama = $r['nama_jenis_biaya'] ?? ($r['judul'] ?? 'Lainnya');
+                $biayaPerJenis[$jenisNama] = ($biayaPerJenis[$jenisNama] ?? 0) + $r['total'];
             }
-            
+
             $p['total_biaya'] = $subtotal;
-            $totalBiaya += $subtotal;
+            $totalBiaya      += $subtotal;
 
             // Group by status
-            if (!isset($biayaPerStatus[$p['status']])) {
-                $biayaPerStatus[$p['status']] = ['count' => 0, 'total' => 0];
-            }
-            $biayaPerStatus[$p['status']]['count']++;
-            $biayaPerStatus[$p['status']]['total'] += $subtotal;
+            $biayaPerStatus[$p['status']]['count'] = ($biayaPerStatus[$p['status']]['count'] ?? 0) + 1;
+            $biayaPerStatus[$p['status']]['total'] = ($biayaPerStatus[$p['status']]['total'] ?? 0) + $subtotal;
         }
+        unset($p);
 
-        // Get all users for filter dropdown
+        // Get all users and jenis biaya for filter dropdowns
         $userModel = new \App\Models\UserModel();
-        $users = $userModel->findAll();
+        $users         = $userModel->findAll();
+        $jenisBiayaList = $this->jenisBiayaModel->orderBy('nama', 'ASC')->findAll();
 
-        // Sort biaya per jenis by total (descending)
         arsort($biayaPerJenis);
+
+        $totalPerjalanan = count($perjalanan);
 
         $data = [
             'title'           => 'Laporan Keuangan',
@@ -149,11 +161,13 @@ class Keuangan extends BaseController
             'biayaPerStatus'  => $biayaPerStatus,
             'biayaPerJenis'   => $biayaPerJenis,
             'users'           => $users,
+            'jenisBiayaList'  => $jenisBiayaList,
             'filters'         => [
-                'start_date' => $startDate,
-                'end_date'   => $endDate,
-                'status'     => $status,
-                'user_id'    => $userId,
+                'start_date'    => $startDate,
+                'end_date'      => $endDate,
+                'status'        => $status,
+                'user_id'       => $userId,
+                'jenis_biaya_id'=> $jenisBiayaId,
             ],
         ];
 
@@ -165,42 +179,47 @@ class Keuangan extends BaseController
      */
     public function exportPdf()
     {
-        // Get filter parameters
-        $startDate = $this->request->getGet('start_date') ?? date('Y-m-01');
-        $endDate   = $this->request->getGet('end_date') ?? date('Y-m-d');
-        $status    = $this->request->getGet('status') ?? 'all';
-        $userId    = $this->request->getGet('user_id') ?? null;
+        $startDate    = $this->request->getGet('start_date')     ?? date('Y-m-01');
+        $endDate      = $this->request->getGet('end_date')       ?? date('Y-m-d');
+        $status       = $this->request->getGet('status')         ?? 'all';
+        $userId       = $this->request->getGet('user_id')        ?? null;
+        $jenisBiayaId = $this->request->getGet('jenis_biaya_id') ?? null;
 
-        // Build query (same as laporan method)
         $builder = $this->db->table('perjalanan_dinas pd');
         $builder->select('pd.*, u.name as pegawai_name, u.email as pegawai_email');
         $builder->join('users u', 'u.id = pd.user_id');
         $builder->where('pd.tanggal_berangkat >=', $startDate);
         $builder->where('pd.tanggal_berangkat <=', $endDate);
 
-        if ($status !== 'all') {
-            $builder->where('pd.status', $status);
-        }
-
-        if ($userId) {
-            $builder->where('pd.user_id', $userId);
+        if ($status !== 'all') { $builder->where('pd.status', $status); }
+        if ($userId)           { $builder->where('pd.user_id', $userId); }
+        if ($jenisBiayaId) {
+            $builder->whereIn('pd.id', function ($sub) use ($jenisBiayaId) {
+                $sub->select('perjalanan_id')->from('rincian_biaya')->where('jenis_biaya_id', $jenisBiayaId);
+            });
         }
 
         $builder->orderBy('pd.tanggal_berangkat', 'DESC');
         $perjalanan = $builder->get()->getResultArray();
 
-        // Calculate totals
         $totalBiaya = 0;
         foreach ($perjalanan as &$p) {
-            $rincian = $this->rincianModel->getByPerjalanan($p['id']);
+            $rincian      = $this->rincianModel->getByPerjalanan($p['id']);
             $p['rincian'] = $rincian;
-            
             $subtotal = 0;
             foreach ($rincian as $r) {
+                if ($jenisBiayaId && $r['jenis_biaya_id'] != $jenisBiayaId) continue;
                 $subtotal += $r['total'];
             }
             $p['total_biaya'] = $subtotal;
-            $totalBiaya += $subtotal;
+            $totalBiaya      += $subtotal;
+        }
+        unset($p);
+
+        $jenisBiayaNama = null;
+        if ($jenisBiayaId) {
+            $jb = $this->jenisBiayaModel->find($jenisBiayaId);
+            $jenisBiayaNama = $jb['nama'] ?? null;
         }
 
         $data = [
@@ -209,6 +228,7 @@ class Keuangan extends BaseController
             'totalBiaya'      => $totalBiaya,
             'startDate'       => $startDate,
             'endDate'         => $endDate,
+            'jenisBiayaNama'  => $jenisBiayaNama,
         ];
 
         return view('print/laporan_keuangan', $data);
@@ -219,39 +239,53 @@ class Keuangan extends BaseController
      */
     public function exportExcel()
     {
-        // Get filter parameters
-        $startDate = $this->request->getGet('start_date') ?? date('Y-m-01');
-        $endDate   = $this->request->getGet('end_date') ?? date('Y-m-d');
-        $status    = $this->request->getGet('status') ?? 'all';
-        $userId    = $this->request->getGet('user_id') ?? null;
+        $startDate    = $this->request->getGet('start_date')     ?? date('Y-m-01');
+        $endDate      = $this->request->getGet('end_date')       ?? date('Y-m-d');
+        $status       = $this->request->getGet('status')         ?? 'all';
+        $userId       = $this->request->getGet('user_id')        ?? null;
+        $jenisBiayaId = $this->request->getGet('jenis_biaya_id') ?? null;
 
-        // Build query
         $builder = $this->db->table('perjalanan_dinas pd');
         $builder->select('pd.*, u.name as pegawai_name, u.email as pegawai_email');
         $builder->join('users u', 'u.id = pd.user_id');
         $builder->where('pd.tanggal_berangkat >=', $startDate);
         $builder->where('pd.tanggal_berangkat <=', $endDate);
 
-        if ($status !== 'all') {
-            $builder->where('pd.status', $status);
-        }
-
-        if ($userId) {
-            $builder->where('pd.user_id', $userId);
+        if ($status !== 'all') { $builder->where('pd.status', $status); }
+        if ($userId)           { $builder->where('pd.user_id', $userId); }
+        if ($jenisBiayaId) {
+            $builder->whereIn('pd.id', function ($sub) use ($jenisBiayaId) {
+                $sub->select('perjalanan_id')->from('rincian_biaya')->where('jenis_biaya_id', $jenisBiayaId);
+            });
         }
 
         $builder->orderBy('pd.tanggal_berangkat', 'DESC');
         $perjalanan = $builder->get()->getResultArray();
 
-        // Prepare CSV data
+        // Add "Filter Jenis Biaya" column header only when filtered
         $csvData = [];
-        $csvData[] = ['No', 'Nomor Surat', 'Pegawai', 'Tujuan', 'Tanggal Berangkat', 'Tanggal Pulang', 'Status', 'Total Biaya'];
+        $headers = ['No', 'Nomor Surat', 'Pegawai', 'Tujuan', 'Tanggal Berangkat', 'Tanggal Pulang', 'Status', 'Total Biaya'];
+        if ($jenisBiayaId) {
+            $headers[] = 'Keterangan Filter';
+        }
+        $csvData[] = $headers;
+
+        $jenisBiayaNama = null;
+        if ($jenisBiayaId) {
+            $jb = $this->jenisBiayaModel->find($jenisBiayaId);
+            $jenisBiayaNama = $jb['nama'] ?? null;
+        }
 
         $no = 1;
         foreach ($perjalanan as $p) {
-            $totalBiaya = $this->rincianModel->getTotalByPerjalanan($p['id']);
-            
-            $csvData[] = [
+            $rincian  = $this->rincianModel->getByPerjalanan($p['id']);
+            $subtotal = 0;
+            foreach ($rincian as $r) {
+                if ($jenisBiayaId && $r['jenis_biaya_id'] != $jenisBiayaId) continue;
+                $subtotal += $r['total'];
+            }
+
+            $row = [
                 $no++,
                 $p['nomor_surat'],
                 $p['pegawai_name'],
@@ -259,25 +293,23 @@ class Keuangan extends BaseController
                 $p['tanggal_berangkat'],
                 $p['tanggal_pulang'],
                 $this->getStatusLabel($p['status']),
-                number_format($totalBiaya, 0, ',', '.'),
+                number_format($subtotal, 0, ',', '.'),
             ];
+            if ($jenisBiayaId) {
+                $row[] = $jenisBiayaNama ?? '';
+            }
+            $csvData[] = $row;
         }
 
-        // Set headers for download
         $filename = 'laporan_keuangan_' . date('Y-m-d_His') . '.csv';
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        
-        // Output CSV
+
         $output = fopen('php://output', 'w');
-        
-        // Add BOM for UTF-8
         fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-        
         foreach ($csvData as $row) {
             fputcsv($output, $row);
         }
-        
         fclose($output);
         exit;
     }
