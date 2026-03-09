@@ -22,7 +22,7 @@
         <i class="fas fa-filter text-primary-600"></i>
         Filter Laporan
     </h3>
-    <form method="GET" action="<?= site_url('keuangan/laporan') ?>" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <form method="GET" action="<?= site_url('keuangan/laporan') ?>" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div>
             <label class="block text-xs font-medium text-gray-700 mb-1">Tanggal Mulai</label>
             <input type="date" name="start_date" value="<?= esc($filters['start_date']) ?>" 
@@ -53,7 +53,23 @@
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="md:col-span-4 flex gap-2">
+        <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">
+                Jenis Biaya
+                <?php if (!empty($filters['jenis_biaya_id'])): ?>
+                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-primary-100 text-primary-700">aktif</span>
+                <?php endif; ?>
+            </label>
+            <select name="jenis_biaya_id" class="w-full px-3 py-2 border <?= !empty($filters['jenis_biaya_id']) ? 'border-primary-400 ring-1 ring-primary-300' : 'border-gray-200' ?> rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white">
+                <option value="">Semua Jenis Biaya</option>
+                <?php foreach ($jenisBiayaList as $jb): ?>
+                    <option value="<?= $jb['id'] ?>" <?= $filters['jenis_biaya_id'] == $jb['id'] ? 'selected' : '' ?>>
+                        <?= esc($jb['nama']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="md:col-span-3 lg:col-span-5 flex gap-2">
             <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold transition">
                 <i class="fas fa-search mr-2"></i>Tampilkan Laporan
             </button>
@@ -63,6 +79,41 @@
         </div>
     </form>
 </div>
+
+<!-- Active filter notice -->
+<?php
+$activeFilters = [];
+if (!empty($filters['jenis_biaya_id'])) {
+    foreach ($jenisBiayaList as $jb) {
+        if ($jb['id'] == $filters['jenis_biaya_id']) {
+            $activeFilters[] = '<i class="fas fa-tags mr-1"></i>Jenis Biaya: <strong>' . esc($jb['nama']) . '</strong>';
+            break;
+        }
+    }
+}
+if (!empty($filters['user_id'])) {
+    foreach ($users as $u) {
+        if ($u['id'] == $filters['user_id']) {
+            $activeFilters[] = '<i class="fas fa-user mr-1"></i>Pegawai: <strong>' . esc($u['name']) . '</strong>';
+            break;
+        }
+    }
+}
+?>
+<?php if (!empty($activeFilters)): ?>
+<div class="flex flex-wrap items-center gap-2 mb-4 px-4 py-3 bg-primary-50 border border-primary-100 rounded-xl text-sm text-primary-700">
+    <i class="fas fa-filter text-primary-500"></i>
+    <span class="font-medium">Filter aktif:</span>
+    <?php foreach ($activeFilters as $af): ?>
+        <span class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-primary-200 text-xs shadow-sm">
+            <?= $af ?>
+        </span>
+    <?php endforeach; ?>
+    <a href="<?= site_url('keuangan/laporan') ?>" class="ml-auto text-xs text-primary-500 hover:text-primary-700 font-medium">
+        <i class="fas fa-times mr-1"></i>Hapus semua filter
+    </a>
+</div>
+<?php endif; ?>
 
 <!-- Statistics Cards -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -83,7 +134,13 @@
             </div>
         </div>
         <p class="text-2xl font-bold mb-1">Rp <?= number_format($totalBiaya, 0, ',', '.') ?></p>
-        <p class="text-green-100 text-sm">Total Biaya</p>
+        <p class="text-green-100 text-sm">
+            <?php if (!empty($filters['jenis_biaya_id'])): ?>
+                Total Biaya (Filtered)
+            <?php else: ?>
+                Total Biaya
+            <?php endif; ?>
+        </p>
     </div>
 
     <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-white shadow-lg">
@@ -163,7 +220,11 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <i class="fas fa-chart-bar text-primary-600"></i>
-            Biaya Per Jenis (Top 5)
+            <?php if (!empty($filters['jenis_biaya_id'])): ?>
+                Biaya Berdasarkan Jenis Terpilih
+            <?php else: ?>
+                Biaya Per Jenis (Top 5)
+            <?php endif; ?>
         </h3>
         <?php if (empty($biayaPerJenis)): ?>
             <p class="text-center text-gray-400 text-sm py-8">Tidak ada data</p>
