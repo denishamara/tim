@@ -85,151 +85,229 @@
                     <i class="fas fa-plus-circle"></i> Tambah Rincian Biaya
                 </h4>
             </div>
-            <form action="/admin/rincian/add/<?= $perjalanan['id'] ?>" method="POST" class="p-5 space-y-3">
+            <form action="/admin/rincian/add/<?= $perjalanan['id'] ?>" method="POST" class="p-5 space-y-4" id="rincianForm">
                 <?= csrf_field() ?>
 
-                <!-- Row 1: Jenis Biaya + Kendaraan -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Biaya <span class="text-red-500">*</span></label>
-                        <select id="judulSelect" name="jenis_biaya_id" required
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
-                            <option value="">-- Pilih Jenis Biaya --</option>
-                            <?php foreach ($jenis_biaya as $jb): ?>
-                            <option value="<?= $jb['id'] ?>"
-                                data-nama="<?= esc($jb['nama']) ?>"
-                                data-satuan="<?= esc($jb['satuan_default']) ?>"
-                                data-harga="<?= $jb['harga_default'] ?>"
-                                data-kendaraan="<?= $jb['butuh_kendaraan'] ?>">
-                                <?= esc($jb['nama']) ?>
-                                <?php if ($jb['harga_default'] > 0): ?>
-                                    — Rp <?= number_format($jb['harga_default'], 0, ',', '.') ?>/<?= esc($jb['satuan_default']) ?>
-                                <?php endif; ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <a href="/admin/jenis-biaya" class="text-xs text-primary-500 hover:underline mt-1 inline-block">
-                            <i class="fas fa-cog mr-0.5"></i> Kelola jenis biaya
-                        </a>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">
-                            Kendaraan
-                            <span id="kendaraanRequired" class="text-red-500 hidden">*</span>
-                            <span id="kendaraanOptional" class="text-gray-400">(jika ada)</span>
-                        </label>
-                        <select id="kendaraanSelect" name="kendaraan_id"
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
-                            <option value="">-- Tanpa Kendaraan --</option>
-                            <?php foreach ($kendaraan as $kid => $knama): ?>
-                            <option value="<?= $kid ?>" data-nama="<?= esc($knama) ?>"><?= esc($knama) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Row 2: Keterangan -->
+                <!-- Header: hanya Jenis Biaya (kendaraan dipilih per-baris) -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan / Uraian Detail <span class="text-red-500">*</span></label>
-                    <input type="text" id="keteranganInput" name="keterangan" required
-                        placeholder="Pilih jenis biaya terlebih dahulu..."
-                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Jenis Biaya <span class="text-red-500">*</span></label>
+                    <select id="judulSelect" name="jenis_biaya_id" required
+                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                        <option value="">-- Pilih Jenis Biaya --</option>
+                        <?php foreach ($jenis_biaya as $jb): ?>
+                        <option value="<?= $jb['id'] ?>"
+                            data-nama="<?= esc($jb['nama']) ?>"
+                            data-satuan="<?= esc($jb['satuan_default']) ?>"
+                            data-harga="<?= $jb['harga_default'] ?>"
+                            data-kendaraan="<?= $jb['butuh_kendaraan'] ?>">
+                            <?= esc($jb['nama']) ?>
+                            <?php if ($jb['harga_default'] > 0): ?>
+                                — Rp <?= number_format($jb['harga_default'], 0, ',', '.') ?>/<?= esc($jb['satuan_default']) ?>
+                            <?php endif; ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <a href="/admin/jenis-biaya" class="text-xs text-primary-500 hover:underline mt-1 inline-block">
+                        <i class="fas fa-cog mr-0.5"></i> Kelola jenis biaya
+                    </a>
                 </div>
 
-                <!-- Row 3: Qty, Satuan, Harga -->
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Banyak <span class="text-red-500">*</span></label>
-                        <input type="number" name="qty" required min="1" value="1" step="0.5"
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+                <!-- Template data kendaraan (dipakai JS untuk build options) -->
+                <template id="kendaraanOptions">
+                    <option value="">-- Pilih Kendaraan --</option>
+                    <?php foreach ($kendaraan as $kid => $knama): ?>
+                    <option value="<?= $kid ?>" data-nama="<?= esc($knama) ?>"><?= esc($knama) ?></option>
+                    <?php endforeach; ?>
+                </template>
+
+                <!-- Dynamic multi-row section -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-semibold text-gray-600">
+                            Baris Keterangan &amp; Biaya <span class="text-red-500">*</span>
+                            <span class="text-gray-400 font-normal ml-1">(satu jenis biaya bisa lebih dari 1 orang/baris)</span>
+                        </label>
+                        <button type="button" id="tambahBaris"
+                            class="flex items-center gap-1 text-xs bg-primary-50 hover:bg-primary-100 text-primary-700 font-semibold px-3 py-1.5 rounded-lg transition border border-primary-200">
+                            <i class="fas fa-user-plus"></i> Tambah Orang / Baris
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Satuan <span class="text-red-500">*</span></label>
-                        <select id="satuanSelect" name="satuan" required
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
-                            <option value="Kali">Kali</option>
-                            <option value="Hari">Hari</option>
-                            <option value="Malam">Malam</option>
-                            <option value="PP">PP</option>
-                            <option value="Liter">Liter</option>
-                            <option value="Km">Km</option>
-                        </select>
+
+                    <!-- Column headers (desktop) -->
+                    <div id="colHeaders" class="hidden md:grid gap-2 px-1 mb-1" style="grid-template-columns:1fr 70px 110px 150px 36px;">
+                        <span class="text-xs text-gray-400 col-header-uraian">Keterangan / Uraian</span>
+                        <span class="text-xs text-gray-400">Banyak</span>
+                        <span class="text-xs text-gray-400">Satuan</span>
+                        <span class="text-xs text-gray-400">Harga Satuan (Rp)</span>
+                        <span></span>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Harga Satuan (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" id="hargaInput" name="harga" required min="0" step="500"
-                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-                            placeholder="0">
+
+                    <div id="barisContainer" class="space-y-2">
+                        <!-- Row pertama (template) -->
+                        <div class="baris-row grid gap-2 items-center bg-gray-50 hover:bg-gray-100 rounded-lg px-2 py-2 transition"
+                             style="grid-template-columns:1fr 70px 110px 150px 36px;">
+                            <!-- Uraian cell: kendaraan select (hidden by default) + teks keterangan -->
+                            <div class="relative">
+                                <select name="kendaraan_id[]" class="baris-kendaraan hidden w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                                    <!-- options injected by JS -->
+                                </select>
+                                <input type="text" name="keterangan[]" required
+                                    placeholder="Nama orang / uraian detail..."
+                                    class="baris-keterangan w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                            </div>
+                            <input type="number" name="qty[]" required value="1" min="0.5" step="0.5"
+                                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                            <select name="satuan[]"
+                                class="baris-satuan w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white">
+                                <option value="Kali">Kali</option>
+                                <option value="Hari">Hari</option>
+                                <option value="Malam">Malam</option>
+                                <option value="PP">PP</option>
+                                <option value="Liter">Liter</option>
+                                <option value="Km">Km</option>
+                            </select>
+                            <input type="number" name="harga[]" required min="0" step="500"
+                                class="baris-harga w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white"
+                                placeholder="0">
+                            <button type="button" class="hapus-baris flex items-center justify-center w-8 h-8 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition text-xl leading-none font-bold" title="Hapus baris">&times;</button>
+                        </div>
                     </div>
                 </div>
 
                 <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition">
-                    <i class="fas fa-plus mr-1"></i> Tambah Baris
+                    <i class="fas fa-save mr-1"></i> Simpan Semua Baris
                 </button>
             </form>
 
             <script>
             (function(){
-                const judulSel     = document.getElementById('judulSelect');
-                const kendaraanSel = document.getElementById('kendaraanSelect');
-                const keteranganIn = document.getElementById('keteranganInput');
-                const satuanSel    = document.getElementById('satuanSelect');
-                const hargaIn      = document.getElementById('hargaInput');
-                const kReq         = document.getElementById('kendaraanRequired');
-                const kOpt         = document.getElementById('kendaraanOptional');
+                const judulSel  = document.getElementById('judulSelect');
+                const container = document.getElementById('barisContainer');
+                const colHeader = document.querySelector('.col-header-uraian');
 
-                function setSatuan(val) {
-                    for (let o of satuanSel.options) {
+                // Build kendaraan options HTML once from <template>
+                const kendaraanTpl = document.getElementById('kendaraanOptions');
+                const kendaraanOptionsHTML = kendaraanTpl ? kendaraanTpl.innerHTML : '';
+
+                let needKend = false;
+
+                function getDefaultSatuan() {
+                    const opt = judulSel.options[judulSel.selectedIndex];
+                    return opt ? (opt.dataset.satuan || 'Kali') : 'Kali';
+                }
+                function getDefaultHarga() {
+                    const opt = judulSel.options[judulSel.selectedIndex];
+                    return opt ? (parseFloat(opt.dataset.harga) || 0) : 0;
+                }
+
+                function setSatuan(sel, val) {
+                    for (let o of sel.options) {
                         if (o.value === val) { o.selected = true; break; }
                     }
                 }
 
-                function fillFromKendaraan() {
-                    const opt = kendaraanSel.options[kendaraanSel.selectedIndex];
-                    if (opt && opt.value) {
-                        keteranganIn.value        = opt.dataset.nama || opt.text;
-                        keteranganIn.dataset.auto = '1';
+                function applyDefaultsToRow(row) {
+                    const satuanSel = row.querySelector('.baris-satuan');
+                    const hargaIn   = row.querySelector('.baris-harga');
+                    const sat       = getDefaultSatuan();
+                    const harga     = getDefaultHarga();
+                    if (satuanSel) setSatuan(satuanSel, sat);
+                    if (hargaIn && harga > 0) hargaIn.value = harga;
+                }
+
+                /** Switch a row between kendaraan-mode and teks-mode */
+                function setRowMode(row, isKend) {
+                    const kendSel  = row.querySelector('.baris-kendaraan');
+                    const ketInput = row.querySelector('.baris-keterangan');
+
+                    if (isKend) {
+                        // Populate options if empty
+                        if (kendSel.options.length <= 1) {
+                            kendSel.innerHTML = kendaraanOptionsHTML;
+                        }
+                        kendSel.classList.remove('hidden');
+                        kendSel.required = true;
+                        ketInput.classList.add('hidden');
+                        ketInput.required = false;
+                    } else {
+                        kendSel.classList.add('hidden');
+                        kendSel.required = false;
+                        kendSel.value = '';
+                        ketInput.classList.remove('hidden');
+                        ketInput.required = true;
                     }
                 }
 
+                function setAllRowModes(isKend) {
+                    container.querySelectorAll('.baris-row').forEach(row => setRowMode(row, isKend));
+                    if (colHeader) colHeader.textContent = isKend ? 'Kendaraan' : 'Keterangan / Uraian';
+                }
+
+                /** When kendaraan is picked in a row, auto-fill hidden keterangan input */
+                function attachKendaraanHandler(row) {
+                    const kendSel  = row.querySelector('.baris-kendaraan');
+                    const ketInput = row.querySelector('.baris-keterangan');
+                    kendSel.addEventListener('change', function() {
+                        const opt = this.options[this.selectedIndex];
+                        ketInput.value = (opt && opt.value) ? (opt.dataset.nama || opt.text) : '';
+                    });
+                }
+
+                function updateDeleteButtons() {
+                    const rows = container.querySelectorAll('.baris-row');
+                    rows.forEach(row => {
+                        const btn = row.querySelector('.hapus-baris');
+                        if (btn) btn.disabled = rows.length === 1;
+                    });
+                }
+
+                function attachDeleteHandler(row) {
+                    row.querySelector('.hapus-baris').addEventListener('click', function() {
+                        if (container.querySelectorAll('.baris-row').length > 1) {
+                            row.remove();
+                            updateDeleteButtons();
+                        }
+                    });
+                }
+
+                function initRow(row) {
+                    attachDeleteHandler(row);
+                    attachKendaraanHandler(row);
+                }
+
+                // Init first row
+                initRow(container.querySelector('.baris-row'));
+                updateDeleteButtons();
+
+                // Tambah Baris
+                document.getElementById('tambahBaris').addEventListener('click', function() {
+                    const firstRow = container.querySelector('.baris-row');
+                    const newRow   = firstRow.cloneNode(true);
+                    // Reset values
+                    const kend = newRow.querySelector('.baris-kendaraan');
+                    const ket  = newRow.querySelector('.baris-keterangan');
+                    if (kend) { kend.value = ''; kend.innerHTML = kendaraanOptionsHTML; }
+                    if (ket)  { ket.value  = ''; }
+                    newRow.querySelector('input[name="qty[]"]').value = '1';
+                    applyDefaultsToRow(newRow);
+                    setRowMode(newRow, needKend);
+                    initRow(newRow);
+                    container.appendChild(newRow);
+                    updateDeleteButtons();
+                    // Focus first visible input
+                    const focusEl = needKend
+                        ? newRow.querySelector('.baris-kendaraan')
+                        : newRow.querySelector('.baris-keterangan');
+                    if (focusEl) focusEl.focus();
+                });
+
+                // Jenis biaya change
                 judulSel.addEventListener('change', function() {
                     const opt = this.options[this.selectedIndex];
                     if (!opt || !opt.value) return;
-
-                    const satuan    = opt.dataset.satuan    || 'Kali';
-                    const harga     = opt.dataset.harga     || '0';
-                    const needKend  = opt.dataset.kendaraan === '1';
-
-                    setSatuan(satuan);
-
-                    // Set harga default if > 0
-                    if (parseFloat(harga) > 0) {
-                        hargaIn.value = harga;
-                    }
-
-                    // Kendaraan required toggle
-                    if (needKend) {
-                        kReq.classList.remove('hidden');
-                        kOpt.classList.add('hidden');
-                        fillFromKendaraan();
-                    } else {
-                        kReq.classList.add('hidden');
-                        kOpt.classList.remove('hidden');
-                        if (keteranganIn.dataset.auto === '1') {
-                            keteranganIn.value        = '';
-                            keteranganIn.dataset.auto = '0';
-                        }
-                        keteranganIn.placeholder = opt.dataset.nama
-                            ? 'Keterangan untuk ' + opt.dataset.nama + '...'
-                            : 'Isi keterangan detail...';
-                    }
-                });
-
-                kendaraanSel.addEventListener('change', function() {
-                    const jbOpt = judulSel.options[judulSel.selectedIndex];
-                    if (jbOpt && jbOpt.dataset.kendaraan === '1') {
-                        fillFromKendaraan();
-                    }
+                    needKend = opt.dataset.kendaraan === '1';
+                    setAllRowModes(needKend);
+                    container.querySelectorAll('.baris-row').forEach(applyDefaultsToRow);
                 });
             })();
             </script>
@@ -263,12 +341,26 @@
                                 <?php if ($perjalanan['status'] === 'approved_1'): ?><th class="px-4 py-2"></th><?php endif; ?>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <?php $grandTotal = 0; foreach ($rincian as $r): $grandTotal += $r['total']; ?>
+                        <tbody>
+                            <?php
+                                $grandTotal = 0;
+                                $prevJudul  = null;
+                                $rowIndex   = 0;
+                                foreach ($rincian as $r):
+                                    $grandTotal += $r['total'];
+                                    $isNewGroup  = ($r['judul'] !== $prevJudul);
+                                    $prevJudul   = $r['judul'];
+                                    $rowIndex++;
+                            ?>
+                            <?php if ($isNewGroup && $rowIndex > 1): ?>
+                            <tr><td colspan="<?= $perjalanan['status'] === 'approved_1' ? 6 : 5 ?>" class="p-0"><div class="border-t-2 border-primary-100"></div></td></tr>
+                            <?php endif; ?>
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-2.5">
-                                    <p class="font-semibold text-xs text-primary-700"><?= esc($r['judul'] ?? '') ?></p>
-                                    <p class="text-gray-700 text-sm"><?= esc($r['keterangan'] ?? $r['uraian']) ?></p>
+                                    <?php if ($isNewGroup && !empty($r['judul'])): ?>
+                                    <p class="font-semibold text-xs text-primary-700 mb-0.5"><?= esc($r['judul']) ?></p>
+                                    <?php endif; ?>
+                                    <p class="text-gray-700 text-sm <?= $isNewGroup ? '' : 'pl-3 border-l-2 border-primary-100' ?>"><?= esc($r['keterangan'] ?? $r['uraian']) ?></p>
                                     <?php if (! empty($r['nama_kendaraan'])): ?>
                                     <p class="text-xs text-gray-400"><i class="fas fa-car mr-1"></i><?= esc($r['nama_kendaraan']) ?> (<?= esc($r['nomor_polisi']) ?>)</p>
                                     <?php endif; ?>

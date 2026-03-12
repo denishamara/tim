@@ -65,34 +65,53 @@ class Admin extends BaseController
             return redirect()->to('/admin')->with('error', 'Tidak dapat menambah rincian biaya pada status ini.');
         }
 
-        $qty          = (float) $this->request->getPost('qty');
-        $harga        = (float) str_replace(['Rp', '.', ' ', ','], ['', '', '', '.'], $this->request->getPost('harga'));
-        $total        = $qty * $harga;
         $jenisBiayaId = (int) $this->request->getPost('jenis_biaya_id');
-
-        // Resolve judul and satuan from master data when jenis_biaya_id is provided
-        $judul  = $this->request->getPost('judul');
-        $satuan = $this->request->getPost('satuan');
+        // Resolve judul and default satuan from master data
+        $judul         = '';
+        $satuanDefault = 'Kali';
         if ($jenisBiayaId) {
-            $jenis  = $this->jenisBiayaModel->find($jenisBiayaId);
-            $judul  = $jenis['nama'] ?? $judul;
-            $satuan = $satuan ?: ($jenis['satuan_default'] ?? 'Kali');
+            $jenis         = $this->jenisBiayaModel->find($jenisBiayaId);
+            $judul         = $jenis['nama']            ?? '';
+            $satuanDefault = $jenis['satuan_default']  ?? 'Kali';
         }
 
-        $this->rincianModel->insert([
-            'perjalanan_id'  => $id,
-            'jenis_biaya_id' => $jenisBiayaId ?: null,
-            'judul'          => $judul,
-            'keterangan'     => $this->request->getPost('keterangan'),
-            'kendaraan_id'   => $this->request->getPost('kendaraan_id') ?: null,
-            'uraian'         => $this->request->getPost('keterangan'), // fallback for NOT NULL constraint
-            'qty'            => $qty,
-            'satuan'         => $satuan,
-            'harga'          => $harga,
-            'total'          => $total,
-        ]);
+        $keteranganArr  = (array) ($this->request->getPost('keterangan')   ?? []);
+        $kendaraanArr   = (array) ($this->request->getPost('kendaraan_id') ?? []);
+        $qtyArr         = (array) ($this->request->getPost('qty')          ?? []);
+        $satuanArr      = (array) ($this->request->getPost('satuan')       ?? []);
+        $hargaArr       = (array) ($this->request->getPost('harga')        ?? []);
 
-        return redirect()->to('/admin/show/' . $id)->with('success', 'Rincian biaya ditambahkan.');
+        $inserted = 0;
+        foreach ($keteranganArr as $i => $ket) {
+            $ket = trim($ket);
+            if ($ket === '') continue;
+
+            $qty         = (float) ($qtyArr[$i]       ?? 1);
+            $harga       = (float) ($hargaArr[$i]     ?? 0);
+            $sat         = $satuanArr[$i]              ?? $satuanDefault;
+            $kendaraanId = ($kendaraanArr[$i] ?? '') ?: null;
+            $total       = $qty * $harga;
+
+            $this->rincianModel->insert([
+                'perjalanan_id'  => $id,
+                'jenis_biaya_id' => $jenisBiayaId ?: null,
+                'judul'          => $judul,
+                'keterangan'     => $ket,
+                'kendaraan_id'   => $kendaraanId,
+                'uraian'         => $ket, // fallback for NOT NULL constraint
+                'qty'            => $qty,
+                'satuan'         => $sat,
+                'harga'          => $harga,
+                'total'          => $total,
+            ]);
+            $inserted++;
+        }
+
+        $msg = $inserted > 1
+            ? "{$inserted} baris rincian biaya ditambahkan."
+            : 'Rincian biaya ditambahkan.';
+
+        return redirect()->to('/admin/show/' . $id)->with('success', $msg);
     }
 
     public function deleteRincian($id, $rincianId)
