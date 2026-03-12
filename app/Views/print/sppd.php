@@ -248,6 +248,23 @@ function tglIndo($date) {
         </div>
     </div>
 
+    <!-- Peserta Perjalanan -->
+    <?php if (!empty($peserta)): ?>
+    <div style="margin: 8px 0; border: 1px solid #000; padding: 6px;">
+        <p style="font-weight: bold; font-size: 10.5pt; margin-bottom: 4px;">Peserta Perjalanan (<?= count($peserta) ?> orang):</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10pt;">
+            <?php foreach ($peserta as $idx => $p): ?>
+                <div style="padding: 2px 4px;">
+                    <strong><?= $idx + 1 ?>.</strong> <?= esc($p['name']) ?>
+                    <?php if (!empty($p['jabatan'])): ?>
+                        <span style="color: #666;"> (<?= esc($p['jabatan']) ?>)</span>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Rincian Biaya Table -->
     <table>
         <thead>

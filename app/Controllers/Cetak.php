@@ -7,6 +7,7 @@ use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
 use App\Models\ApprovalLogModel;
 use App\Models\UserModel;
+use App\Models\PerjalananPesertaModel;
 
 class Cetak extends BaseController
 {
@@ -16,6 +17,7 @@ class Cetak extends BaseController
         $rincianModel    = new RincianBiayaModel();
         $logModel        = new ApprovalLogModel();
         $userModel       = new UserModel();
+        $pesertaModel    = new PerjalananPesertaModel();
 
         $perjalanan = $perjalananModel->getWithUser($id);
         if (! $perjalanan) {
@@ -39,6 +41,7 @@ class Cetak extends BaseController
         $data['perjalanan']   = $perjalanan;
         $data['rincian']      = $rincianModel->getByPerjalanan($id);
         $data['total']        = $rincianModel->getTotalByPerjalanan($id);
+        $data['peserta']      = $pesertaModel->getByPerjalanan($id);
         $data['admin_user']   = $adminUser;
         $data['direktur_user'] = $direkturUser;
         $data['pegawai_name'] = $perjalanan['pegawai_name'];

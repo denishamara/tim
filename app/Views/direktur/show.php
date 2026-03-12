@@ -49,6 +49,33 @@
             </div>
         </div>
 
+        <!-- Peserta Perjalanan -->
+        <?php if (!empty($peserta)): ?>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
+                <h4 class="font-semibold text-gray-700 text-sm flex items-center gap-2">
+                    <i class="fas fa-users text-primary-600"></i>
+                    Peserta Perjalanan (<?= count($peserta) ?> orang)
+                </h4>
+            </div>
+            <div class="p-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <?php foreach ($peserta as $p): ?>
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-sm">
+                            <?= strtoupper(substr($p['name'], 0, 1)) ?>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800 text-sm"><?= esc($p['name']) ?></p>
+                            <p class="text-xs text-gray-500"><?= esc($p['email']) ?></p>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Rincian Biaya (jika ada) -->
         <?php if (! empty($rincian)): ?>
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

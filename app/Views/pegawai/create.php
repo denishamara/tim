@@ -69,6 +69,35 @@
                     <p class="text-xs text-gray-400 mt-1">Isi jadwal kunjungan harian (opsional)</p>
                 </div>
 
+                <!-- Peserta Perjalanan (Multiple Users) -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                        <i class="fas fa-users text-primary-400 mr-1"></i> Peserta Perjalanan
+                    </label>
+                    <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 max-h-64 overflow-y-auto">
+                        <p class="text-xs text-gray-500 mb-3">Pilih pegawai yang akan ikut dalam perjalanan dinas ini:</p>
+                        <div class="space-y-2">
+                            <?php foreach ($users as $user): ?>
+                                <label class="flex items-center gap-3 p-2.5 bg-white border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 cursor-pointer transition">
+                                    <input type="checkbox" name="peserta_ids[]" value="<?= $user['id'] ?>" 
+                                           class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
+                                           <?= $user['id'] == session()->get('user_id') ? 'checked' : '' ?>>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-800"><?= esc($user['name']) ?></p>
+                                        <p class="text-xs text-gray-500"><?= esc($user['email']) ?></p>
+                                    </div>
+                                    <?php if ($user['id'] == session()->get('user_id')): ?>
+                                        <span class="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">Anda</span>
+                                    <?php endif; ?>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1.5">
+                        <i class="fas fa-info-circle"></i> Centang nama pegawai yang akan ikut dalam perjalanan ini
+                    </p>
+                </div>
+
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Upload Dokumen Pendukung</label>
                     <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition bg-gray-50">

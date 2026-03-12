@@ -6,16 +6,22 @@ use App\Models\PerjalananDinasModel;
 use App\Models\DokumenPerjalananModel;
 use App\Models\RincianBiayaModel;
 use App\Models\ApprovalLogModel;
+use App\Models\PerjalananPesertaModel;
+use App\Models\UserModel;
 
 class Pegawai extends BaseController
 {
     protected $perjalananModel;
     protected $dokumenModel;
+    protected $pesertaModel;
+    protected $userModel;
 
     public function __construct()
     {
         $this->perjalananModel = new PerjalananDinasModel();
         $this->dokumenModel    = new DokumenPerjalananModel();
+        $this->pesertaModel    = new PerjalananPesertaModel();
+        $this->userModel       = new UserModel();
     }
 
     public function index()
@@ -30,6 +36,8 @@ class Pegawai extends BaseController
 
     public function create()
     {
+        // Get all users for participant selection (exclude current user or include, depending on requirement)
+        $data['users'] = $this->userModel->findAll();
         $data['title'] = 'Ajukan Perjalanan Dinas';
         return view('pegawai/create', $data);
     }
@@ -79,6 +87,16 @@ class Pegawai extends BaseController
             ]);
         }
 
+        // Save participants (peserta)
+        $pesertaIds = $this->request->getPost('peserta_ids'); // Array of user IDs
+        if (!empty($pesertaIds) && is_array($pesertaIds)) {
+            foreach ($pesertaIds as $pesertaId) {
+                if (!empty($pesertaId)) {
+                    $this->pesertaModel->addPeserta($id, $pesertaId);
+                }
+            }
+        }
+
         return redirect()->to('/pegawai')->with('success', 'Pengajuan berhasil dikirim dengan nomor ' . $nomorSurat);
     }
 
@@ -98,6 +116,7 @@ class Pegawai extends BaseController
         $data['dokumen']    = $this->dokumenModel->getByPerjalanan($id);
         $data['rincian']    = $rincianModel->getByPerjalanan($id);
         $data['logs']       = $logModel->getLogsByPerjalanan($id);
+        $data['peserta']    = $this->pesertaModel->getByPerjalanan($id);
         $data['title']      = 'Detail Perjalanan Dinas';
         return view('pegawai/show', $data);
     }

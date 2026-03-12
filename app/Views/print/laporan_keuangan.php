@@ -205,6 +205,24 @@
                     <td><?= date('d/m/Y', strtotime($p['tanggal_pulang'])) ?></td>
                     <td class="text-right">Rp <?= number_format($p['total_biaya'], 0, ',', '.') ?></td>
                 </tr>
+                <!-- Peserta -->
+                <?php 
+                $pesertaModel = new \App\Models\PerjalananPesertaModel();
+                $pesertaList = $pesertaModel->getByPerjalanan($p['id']);
+                if (!empty($pesertaList) && count($pesertaList) > 1): 
+                ?>
+                <tr>
+                    <td colspan="7" style="padding: 5px 10px; background: #fafafa; border-top: none;">
+                        <strong style="font-size: 8pt;">Peserta (<?= count($pesertaList) ?> orang):</strong>
+                        <span style="font-size: 8pt;">
+                            <?php 
+                            $names = array_map(function($item) { return $item['name']; }, $pesertaList);
+                            echo implode(', ', $names);
+                            ?>
+                        </span>
+                    </td>
+                </tr>
+                <?php endif; ?>
                 <!-- Detail Rincian Biaya -->
                 <?php if (!empty($p['rincian'])): ?>
                 <tr>

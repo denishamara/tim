@@ -6,6 +6,7 @@ use App\Models\PerjalananDinasModel;
 use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
 use App\Models\ApprovalLogModel;
+use App\Models\PerjalananPesertaModel;
 
 class Direktur extends BaseController
 {
@@ -13,6 +14,7 @@ class Direktur extends BaseController
     protected $rincianModel;
     protected $dokumenModel;
     protected $logModel;
+    protected $pesertaModel;
 
     public function __construct()
     {
@@ -20,6 +22,7 @@ class Direktur extends BaseController
         $this->rincianModel    = new RincianBiayaModel();
         $this->dokumenModel    = new DokumenPerjalananModel();
         $this->logModel        = new ApprovalLogModel();
+        $this->pesertaModel    = new PerjalananPesertaModel();
     }
 
     public function index()
@@ -47,6 +50,7 @@ class Direktur extends BaseController
         $data['dokumen']    = $this->dokumenModel->getByPerjalanan($id);
         $data['rincian']    = $this->rincianModel->getByPerjalanan($id);
         $data['logs']       = $this->logModel->getLogsByPerjalanan($id);
+        $data['peserta']    = $this->pesertaModel->getByPerjalanan($id);
         $data['title']      = 'Detail Perjalanan';
         return view('direktur/show', $data);
     }

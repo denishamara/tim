@@ -7,6 +7,7 @@ use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
 use App\Models\ApprovalLogModel;
 use App\Models\JenisBiayaModel;
+use App\Models\PerjalananPesertaModel;
 
 class Keuangan extends BaseController
 {
@@ -16,6 +17,7 @@ class Keuangan extends BaseController
     protected $logModel;
     protected $db;
     protected $jenisBiayaModel;
+    protected $pesertaModel;
 
     public function __construct()
     {
@@ -25,6 +27,7 @@ class Keuangan extends BaseController
         $this->logModel         = new ApprovalLogModel();
         $this->db               = \Config\Database::connect();
         $this->jenisBiayaModel  = new JenisBiayaModel();
+        $this->pesertaModel     = new PerjalananPesertaModel();
     }
 
     public function index()
@@ -46,6 +49,7 @@ class Keuangan extends BaseController
         $data['dokumen']    = $this->dokumenModel->getByPerjalanan($id);
         $data['rincian']    = $this->rincianModel->getByPerjalanan($id);
         $data['logs']       = $this->logModel->getLogsByPerjalanan($id);
+        $data['peserta']    = $this->pesertaModel->getByPerjalanan($id);
         $data['title']      = 'Detail Perjalanan - Keuangan';
         return view('keuangan/show', $data);
     }

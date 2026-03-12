@@ -8,6 +8,7 @@ use App\Models\DokumenPerjalananModel;
 use App\Models\ApprovalLogModel;
 use App\Models\KendaraanModel;
 use App\Models\JenisBiayaModel;
+use App\Models\PerjalananPesertaModel;
 
 class Admin extends BaseController
 {
@@ -17,6 +18,7 @@ class Admin extends BaseController
     protected $logModel;
     protected $kendaraanModel;
     protected $jenisBiayaModel;
+    protected $pesertaModel;
 
     public function __construct()
     {
@@ -26,6 +28,7 @@ class Admin extends BaseController
         $this->logModel         = new ApprovalLogModel();
         $this->kendaraanModel   = new KendaraanModel();
         $this->jenisBiayaModel  = new JenisBiayaModel();
+        $this->pesertaModel     = new PerjalananPesertaModel();
     }
 
     public function index()
@@ -48,6 +51,7 @@ class Admin extends BaseController
         $data['dokumen']     = $this->dokumenModel->getByPerjalanan($id);
         $data['rincian']     = $this->rincianModel->getByPerjalanan($id);
         $data['logs']        = $this->logModel->getLogsByPerjalanan($id);
+        $data['peserta']     = $this->pesertaModel->getByPerjalanan($id);
         $data['kendaraan']   = $this->kendaraanModel->getDropdown();
         $data['jenis_biaya'] = $this->jenisBiayaModel->getAktif();
         $data['title']       = 'Detail & Proses Perjalanan';
