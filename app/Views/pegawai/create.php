@@ -100,14 +100,61 @@
 
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">Upload Dokumen Pendukung</label>
-                    <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition bg-gray-50">
-                        <div class="text-center">
+                    <label id="uploadZone" class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition bg-gray-50">
+                        <!-- State: belum ada file -->
+                        <div id="uploadEmpty" class="text-center">
                             <i class="fas fa-cloud-upload-alt text-2xl text-gray-300 mb-1"></i>
                             <p class="text-sm text-gray-500">Klik untuk upload atau seret file ke sini</p>
                             <p class="text-xs text-gray-400 mt-1">PDF, DOC, JPG, PNG (maks. 5MB)</p>
                         </div>
-                        <input type="file" name="dokumen" class="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <!-- State: sudah ada file (disembunyikan sampai file dipilih) -->
+                        <div id="uploadFilled" class="hidden text-center">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1.5">
+                                <i class="fas fa-check text-green-600 text-lg"></i>
+                            </div>
+                            <p id="uploadFileName" class="text-sm font-semibold text-green-700 max-w-xs truncate px-4"></p>
+                            <p class="text-xs text-green-500 mt-0.5">File siap diupload · <span class="underline">Ganti file</span></p>
+                        </div>
+                        <input type="file" id="dokumenInput" name="dokumen" class="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
                     </label>
+                    <script>
+                    (function(){
+                        const input    = document.getElementById('dokumenInput');
+                        const zone     = document.getElementById('uploadZone');
+                        const empty    = document.getElementById('uploadEmpty');
+                        const filled   = document.getElementById('uploadFilled');
+                        const nameEl   = document.getElementById('uploadFileName');
+
+                        function showFile(file) {
+                            if (!file) return;
+                            nameEl.textContent = file.name;
+                            empty.classList.add('hidden');
+                            filled.classList.remove('hidden');
+                            zone.classList.remove('border-gray-200', 'bg-gray-50');
+                            zone.classList.add('border-green-400', 'bg-green-50');
+                        }
+
+                        input.addEventListener('change', function() {
+                            showFile(this.files[0]);
+                        });
+
+                        // Drag & drop support
+                        zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('border-primary-400','bg-primary-50'); });
+                        zone.addEventListener('dragleave', e => { zone.classList.remove('border-primary-400','bg-primary-50'); });
+                        zone.addEventListener('drop', function(e) {
+                            e.preventDefault();
+                            zone.classList.remove('border-primary-400','bg-primary-50');
+                            const file = e.dataTransfer.files[0];
+                            if (file) {
+                                // Transfer to input
+                                const dt = new DataTransfer();
+                                dt.items.add(file);
+                                input.files = dt.files;
+                                showFile(file);
+                            }
+                        });
+                    })();
+                    </script>
                 </div>
             </div>
 

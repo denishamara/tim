@@ -115,8 +115,13 @@
                 <!-- Template data kendaraan (dipakai JS untuk build options) -->
                 <template id="kendaraanOptions">
                     <option value="">-- Pilih Kendaraan --</option>
-                    <?php foreach ($kendaraan as $kid => $knama): ?>
-                    <option value="<?= $kid ?>" data-nama="<?= esc($knama) ?>"><?= esc($knama) ?></option>
+                    <?php foreach ($kendaraan as $kid => $knama):
+                        $isBusy = in_array($kid, $busy_kendaraan_ids ?? []);
+                    ?>
+                    <option value="<?= $kid ?>" data-nama="<?= esc($knama) ?>"
+                        <?= $isBusy ? 'disabled class="text-gray-400"' : '' ?>>
+                        <?= esc($knama) ?><?= $isBusy ? ' — sudah dipakai' : '' ?>
+                    </option>
                     <?php endforeach; ?>
                 </template>
 

@@ -52,8 +52,15 @@ class Admin extends BaseController
         $data['rincian']     = $this->rincianModel->getByPerjalanan($id);
         $data['logs']        = $this->logModel->getLogsByPerjalanan($id);
         $data['peserta']     = $this->pesertaModel->getByPerjalanan($id);
-        $data['kendaraan']   = $this->kendaraanModel->getDropdown();
-        $data['jenis_biaya'] = $this->jenisBiayaModel->getAktif();
+        $data['kendaraan']           = $this->kendaraanModel->getDropdown();
+        $data['jenis_biaya']         = $this->jenisBiayaModel->getAktif();
+        $data['busy_kendaraan_ids']  = ($perjalanan['status'] === 'approved_1')
+            ? $this->kendaraanModel->getBusyKendaraanIds(
+                $perjalanan['tanggal_berangkat'],
+                $perjalanan['tanggal_pulang'],
+                (int) $id
+              )
+            : [];
         $data['title']       = 'Detail & Proses Perjalanan';
         return view('admin/show', $data);
     }
