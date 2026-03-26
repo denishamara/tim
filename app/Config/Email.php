@@ -123,4 +123,21 @@ class Email extends BaseConfig
      * Enable notify message from server
      */
     public bool $DSN = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->fromEmail = (string) env('email.fromEmail', $this->fromEmail);
+        $this->fromName  = (string) env('email.fromName', $this->fromName);
+        $this->protocol  = (string) env('email.protocol', $this->protocol);
+        $this->SMTPHost  = (string) env('email.SMTPHost', $this->SMTPHost);
+        $this->SMTPAuthMethod = (string) env('email.SMTPAuthMethod', $this->SMTPAuthMethod);
+        $this->SMTPUser  = (string) env('email.SMTPUser', $this->SMTPUser);
+        $this->SMTPPass  = (string) env('email.SMTPPass', $this->SMTPPass);
+        $this->SMTPPort  = (int) env('email.SMTPPort', $this->SMTPPort);
+        $this->SMTPTimeout = (int) env('email.SMTPTimeout', $this->SMTPTimeout);
+        $this->SMTPCrypto = (string) env('email.SMTPCrypto', $this->SMTPCrypto);
+        $this->mailType  = (string) env('email.mailType', $this->mailType);
+    }
 }

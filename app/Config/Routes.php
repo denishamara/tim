@@ -36,6 +36,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     // Admin routes
     $routes->group('admin', ['filter' => 'role:admin'], function ($routes) {
         $routes->get('',                              'Admin::index');
+        $routes->post('test-email',                   'Admin::testEmail');
         $routes->get('show/(:num)',                   'Admin::show/$1');
         $routes->post('rincian/add/(:num)',           'Admin::addRincian/$1');
         $routes->get('rincian/delete/(:num)/(:num)',  'Admin::deleteRincian/$1/$2');

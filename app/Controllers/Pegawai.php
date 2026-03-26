@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\NotifikasiEmailService;
 use App\Models\PerjalananDinasModel;
 use App\Models\DokumenPerjalananModel;
 use App\Models\RincianBiayaModel;
@@ -15,6 +16,7 @@ class Pegawai extends BaseController
     protected $dokumenModel;
     protected $pesertaModel;
     protected $userModel;
+    protected NotifikasiEmailService $notifEmail;
 
     public function __construct()
     {
@@ -22,6 +24,7 @@ class Pegawai extends BaseController
         $this->dokumenModel    = new DokumenPerjalananModel();
         $this->pesertaModel    = new PerjalananPesertaModel();
         $this->userModel       = new UserModel();
+        $this->notifEmail      = new NotifikasiEmailService();
     }
 
     public function index()
@@ -95,6 +98,15 @@ class Pegawai extends BaseController
                     $this->pesertaModel->addPeserta($id, $pesertaId);
                 }
             }
+        }
+
+        $perjalanan = $this->perjalananModel->find($id);
+        if ($perjalanan) {
+            $this->notifEmail->kirimAksiRole(
+                'direktur',
+                $perjalanan,
+                'Persetujuan Tahap 1 (Perjalanan)'
+            );
         }
 
         return redirect()->to('/pegawai')->with('success', 'Pengajuan berhasil dikirim dengan nomor ' . $nomorSurat);

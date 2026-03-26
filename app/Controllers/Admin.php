@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\NotifikasiEmailService;
 use App\Models\PerjalananDinasModel;
 use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
@@ -19,6 +20,7 @@ class Admin extends BaseController
     protected $kendaraanModel;
     protected $jenisBiayaModel;
     protected $pesertaModel;
+    protected NotifikasiEmailService $notifEmail;
 
     public function __construct()
     {
@@ -29,6 +31,7 @@ class Admin extends BaseController
         $this->kendaraanModel   = new KendaraanModel();
         $this->jenisBiayaModel  = new JenisBiayaModel();
         $this->pesertaModel     = new PerjalananPesertaModel();
+        $this->notifEmail       = new NotifikasiEmailService();
     }
 
     public function index()
@@ -38,6 +41,39 @@ class Admin extends BaseController
         $data['arsip']     = $this->perjalananModel->getByStatusWithUser(['draft', 'rejected_1']);
         $data['title']     = 'Dashboard Admin';
         return view('admin/index', $data);
+    }
+
+    public function testEmail()
+    {
+        $to = (string) session()->get('email');
+        if ($to === '') {
+            return redirect()->to('/admin')->with('error', 'Email akun admin tidak ditemukan.');
+        }
+
+        $email    = service('email');
+        $cfg      = config('Email');
+        $fromMail = $cfg->fromEmail ?: 'no-reply@jaldin.local';
+        $fromName = $cfg->fromName ?: 'Sistem Jaldin';
+
+        $email->clear(true);
+        $email->setFrom($fromMail, $fromName);
+        $email->setTo($to);
+        $email->setSubject('Test Email Notifikasi Jaldin');
+        $email->setMessage(
+            "Halo " . session()->get('name') . ",\n\n"
+            . "Ini adalah email test dari sistem Jaldin.\n"
+            . "Waktu kirim: " . date('Y-m-d H:i:s') . "\n\n"
+            . "Jika email ini masuk, konfigurasi SMTP Anda sudah berjalan."
+        );
+
+        if (! $email->send()) {
+            log_message('error', 'Gagal kirim email test admin: {err}', [
+                'err' => trim(strip_tags($email->printDebugger(['headers']))),
+            ]);
+            return redirect()->to('/admin')->with('error', 'Gagal kirim email test. Cek konfigurasi SMTP di .env.');
+        }
+
+        return redirect()->to('/admin')->with('success', 'Email test berhasil dikirim ke ' . $to);
     }
 
     public function show($id)
@@ -52,8 +88,15 @@ class Admin extends BaseController
         $data['rincian']     = $this->rincianModel->getByPerjalanan($id);
         $data['logs']        = $this->logModel->getLogsByPerjalanan($id);
         $data['peserta']     = $this->pesertaModel->getByPerjalanan($id);
-        $data['kendaraan']   = $this->kendaraanModel->getDropdown();
-        $data['jenis_biaya'] = $this->jenisBiayaModel->getAktif();
+        $data['kendaraan']           = $this->kendaraanModel->getDropdown();
+        $data['jenis_biaya']         = $this->jenisBiayaModel->getAktif();
+        $data['busy_kendaraan_ids']  = ($perjalanan['status'] === 'approved_1')
+            ? $this->kendaraanModel->getBusyKendaraanIds(
+                $perjalanan['tanggal_berangkat'],
+                $perjalanan['tanggal_pulang'],
+                (int) $id
+              )
+            : [];
         $data['title']       = 'Detail & Proses Perjalanan';
         return view('admin/show', $data);
     }
@@ -142,6 +185,20 @@ class Admin extends BaseController
             'catatan'       => 'Perincian biaya telah disiapkan oleh admin, menunggu persetujuan direktur.',
             'approved_at'   => date('Y-m-d H:i:s'),
         ]);
+
+        $updatedPerjalanan = $this->perjalananModel->find($id);
+        if ($updatedPerjalanan) {
+            $this->notifEmail->kirimAksiRole(
+                'direktur',
+                $updatedPerjalanan,
+                'Persetujuan Tahap 2 (Rincian Biaya)'
+            );
+
+            $this->notifEmail->kirimStatusPemohon(
+                $updatedPerjalanan,
+                'Diproses Admin (menunggu persetujuan direktur untuk rincian biaya)'
+            );
+        }
 
         return redirect()->to('/admin')->with('success', 'Perjalanan telah dikirim ke direktur untuk persetujuan rincian biaya.');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\NotifikasiEmailService;
 use App\Models\PerjalananDinasModel;
 use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
@@ -15,6 +16,7 @@ class Direktur extends BaseController
     protected $dokumenModel;
     protected $logModel;
     protected $pesertaModel;
+    protected NotifikasiEmailService $notifEmail;
 
     public function __construct()
     {
@@ -23,6 +25,7 @@ class Direktur extends BaseController
         $this->dokumenModel    = new DokumenPerjalananModel();
         $this->logModel        = new ApprovalLogModel();
         $this->pesertaModel    = new PerjalananPesertaModel();
+        $this->notifEmail      = new NotifikasiEmailService();
     }
 
     public function index()
@@ -66,10 +69,12 @@ class Direktur extends BaseController
             // Approve perjalanan (tahap 1)
             $this->perjalananModel->update($id, ['status' => 'approved_1']);
             $logStatus = 'approved_1';
+            $statusText = 'Disetujui Direktur Tahap 1';
         } elseif ($perjalanan['status'] === 'processed_admin') {
             // Approve rincian biaya (tahap 2)
             $this->perjalananModel->update($id, ['status' => 'approved_2']);
             $logStatus = 'approved_2';
+            $statusText = 'Disetujui Direktur Tahap 2';
         } else {
             return redirect()->to('/direktur')->with('error', 'Status tidak valid untuk disetujui.');
         }
@@ -83,7 +88,26 @@ class Direktur extends BaseController
             'approved_at'   => date('Y-m-d H:i:s'),
         ]);
 
-        return redirect()->to('/direktur')->with('success', 'Perjalanan berhasil disetujui.');
+        $updatedPerjalanan = $this->perjalananModel->find($id);
+        $emailPemohonTerkirim = false;
+        if ($updatedPerjalanan) {
+            $emailPemohonTerkirim = $this->notifEmail->kirimStatusPemohon($updatedPerjalanan, $statusText, $catatan ?: null);
+
+            if ($logStatus === 'approved_1') {
+                $this->notifEmail->kirimAksiRole('admin', $updatedPerjalanan, 'Penyusunan Rincian Biaya');
+            }
+
+            if ($logStatus === 'approved_2') {
+                $this->notifEmail->kirimAksiRole('keuangan', $updatedPerjalanan, 'Pencatatan Dana / Penyelesaian');
+            }
+        }
+
+        $msg = 'Perjalanan berhasil disetujui.';
+        $msg .= $emailPemohonTerkirim
+            ? ' Email notifikasi ke pemohon terkirim.'
+            : ' Namun email notifikasi ke pemohon gagal terkirim.';
+
+        return redirect()->to('/direktur')->with('success', $msg);
     }
 
     public function reject($id)
@@ -96,9 +120,11 @@ class Direktur extends BaseController
         if ($perjalanan['status'] === 'draft') {
             $this->perjalananModel->update($id, ['status' => 'rejected_1']);
             $logStatus = 'rejected_1';
+            $statusText = 'Ditolak Direktur Tahap 1';
         } elseif ($perjalanan['status'] === 'processed_admin') {
             $this->perjalananModel->update($id, ['status' => 'rejected_2']);
             $logStatus = 'rejected_2';
+            $statusText = 'Ditolak Direktur Tahap 2';
         } else {
             return redirect()->to('/direktur')->with('error', 'Status tidak valid untuk ditolak.');
         }
@@ -112,6 +138,17 @@ class Direktur extends BaseController
             'approved_at'   => date('Y-m-d H:i:s'),
         ]);
 
-        return redirect()->to('/direktur')->with('success', 'Perjalanan berhasil ditolak.');
+        $updatedPerjalanan = $this->perjalananModel->find($id);
+        $emailPemohonTerkirim = false;
+        if ($updatedPerjalanan) {
+            $emailPemohonTerkirim = $this->notifEmail->kirimStatusPemohon($updatedPerjalanan, $statusText, $catatan ?: null);
+        }
+
+        $msg = 'Perjalanan berhasil ditolak.';
+        $msg .= $emailPemohonTerkirim
+            ? ' Email notifikasi ke pemohon terkirim.'
+            : ' Namun email notifikasi ke pemohon gagal terkirim.';
+
+        return redirect()->to('/direktur')->with('success', $msg);
     }
 }
