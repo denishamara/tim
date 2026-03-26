@@ -59,10 +59,14 @@
         <!-- Nav -->
         <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
             <?php $role = session()->get('role'); ?>
+            <?php $notif = sppd_sidebar_notifications(); ?>
 
             <?php if ($role === 'pegawai'): ?>
-                <a href="/pegawai" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all <?= str_contains(current_url(), '/pegawai') ? 'active' : '' ?>">
+                <a href="/pegawai" class="sidebar-link flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all <?= str_contains(current_url(), '/pegawai') ? 'active' : '' ?>">
+                    <span class="flex items-center gap-3">
                     <i class="fas fa-list-alt w-5 text-center text-primary-300"></i> Perjalanan Saya
+                    </span>
+                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full"><?= (int) ($notif['total'] ?? 0) ?></span>
                 </a>
                 <a href="/pegawai/create" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all">
                     <i class="fas fa-plus-circle w-5 text-center text-primary-300"></i> Ajukan Perjalanan
@@ -70,8 +74,11 @@
             <?php endif; ?>
 
             <?php if ($role === 'admin'): ?>
-                <a href="/admin" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all <?= current_url() === base_url('admin') ? 'active' : '' ?>">
+                <a href="/admin" class="sidebar-link flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all <?= current_url() === base_url('admin') ? 'active' : '' ?>">
+                    <span class="flex items-center gap-3">
                     <i class="fas fa-tasks w-5 text-center text-primary-300"></i> Proses Pengajuan
+                    </span>
+                    <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) (($notif['items'][0]['count'] ?? 0)) ?></span>
                 </a>
                 <a href="/admin/arsip" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all <?= str_contains(current_url(), '/arsip') ? 'active' : '' ?>">
                     <i class="fas fa-archive w-5 text-center text-primary-300"></i> Arsip Perjalanan
@@ -85,14 +92,20 @@
             <?php endif; ?>
 
             <?php if ($role === 'direktur'): ?>
-                <a href="/direktur" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all">
+                <a href="/direktur" class="sidebar-link flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all">
+                    <span class="flex items-center gap-3">
                     <i class="fas fa-check-circle w-5 text-center text-primary-300"></i> Persetujuan
+                    </span>
+                    <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) ($notif['total'] ?? 0) ?></span>
                 </a>
             <?php endif; ?>
 
             <?php if ($role === 'keuangan'): ?>
-                <a href="/keuangan" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all">
+                <a href="/keuangan" class="sidebar-link flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all">
+                    <span class="flex items-center gap-3">
                     <i class="fas fa-wallet w-5 text-center text-primary-300"></i> Dana Operasional
+                    </span>
+                    <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) (($notif['items'][0]['count'] ?? 0)) ?></span>
                 </a>
             <?php endif; ?>
         </nav>

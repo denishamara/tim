@@ -168,16 +168,33 @@
             <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
                 <h4 class="font-semibold text-gray-700 text-sm">Riwayat Proses</h4>
             </div>
-            <div class="p-4 space-y-3">
-                <?php if (empty($logs)): ?>
-                    <p class="text-xs text-gray-400 text-center py-4">Belum ada riwayat</p>
-                <?php else: foreach ($logs as $log): ?>
-                    <div class="border-l-2 border-primary-200 pl-3">
-                        <p class="text-xs font-semibold text-gray-700 capitalize"><?= esc($log['role']) ?>: <?= esc($log['approver_name'] ?? '-') ?></p>
-                        <p class="text-xs text-gray-500"><?= esc($log['catatan']) ?></p>
-                        <p class="text-xs text-gray-400"><?= $log['approved_at'] ? date('d M Y H:i', strtotime($log['approved_at'])) : '-' ?></p>
+            <div class="p-4">
+                <?php $timeline = sppd_process_timeline($perjalanan, $logs); ?>
+                <div class="relative">
+                    <div class="absolute left-3.5 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                    <div class="space-y-4">
+                        <?php foreach ($timeline as $step): ?>
+                            <?php
+                                $isDone = $step['state'] === 'done';
+                                $isRejected = $step['state'] === 'rejected';
+                                $dotClass = $isDone ? 'bg-green-100 text-green-600' : ($isRejected ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-400');
+                                $titleClass = $isDone ? 'text-gray-800' : ($isRejected ? 'text-red-700' : 'text-gray-500');
+                                $descClass = $isDone ? 'text-gray-500' : ($isRejected ? 'text-red-500' : 'text-gray-400');
+                                $icon = $isDone ? 'fa-check' : ($isRejected ? 'fa-times' : 'fa-clock');
+                            ?>
+                            <div class="relative pl-9">
+                                <div class="absolute left-0 w-7 h-7 rounded-full flex items-center justify-center <?= $dotClass ?>">
+                                    <i class="fas <?= $icon ?> text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold <?= $titleClass ?>"><?= esc($step['label']) ?></p>
+                                    <p class="text-xs <?= $descClass ?>"><?= esc($step['detail']) ?></p>
+                                    <p class="text-xs text-gray-400 mt-0.5"><?= esc($step['time']) ?></p>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; endif; ?>
+                </div>
             </div>
         </div>
     </div>

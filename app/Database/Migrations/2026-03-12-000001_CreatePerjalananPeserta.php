@@ -8,6 +8,11 @@ class CreatePerjalananPeserta extends Migration
 {
     public function up()
     {
+        $table = $this->db->query("SHOW TABLES LIKE 'perjalanan_peserta'")->getFirstRow();
+        if ($table) {
+            return;
+        }
+
         $this->forge->addField([
             'id' => [
                 'type' => 'BIGINT',
@@ -50,6 +55,6 @@ class CreatePerjalananPeserta extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('perjalanan_peserta');
+        $this->forge->dropTable('perjalanan_peserta', true);
     }
 }
