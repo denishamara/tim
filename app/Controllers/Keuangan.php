@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\NotifikasiEmailService;
 use App\Models\PerjalananDinasModel;
 use App\Models\RincianBiayaModel;
 use App\Models\DokumenPerjalananModel;
@@ -18,6 +19,7 @@ class Keuangan extends BaseController
     protected $db;
     protected $jenisBiayaModel;
     protected $pesertaModel;
+    protected NotifikasiEmailService $notifEmail;
 
     public function __construct()
     {
@@ -28,6 +30,7 @@ class Keuangan extends BaseController
         $this->db               = \Config\Database::connect();
         $this->jenisBiayaModel  = new JenisBiayaModel();
         $this->pesertaModel     = new PerjalananPesertaModel();
+        $this->notifEmail       = new NotifikasiEmailService();
     }
 
     public function index()
@@ -73,6 +76,11 @@ class Keuangan extends BaseController
             'catatan'       => $catatan,
             'approved_at'   => date('Y-m-d H:i:s'),
         ]);
+
+        $updatedPerjalanan = $this->perjalananModel->find($id);
+        if ($updatedPerjalanan) {
+            $this->notifEmail->kirimStatusPemohon($updatedPerjalanan, 'Selesai (Keuangan)', $catatan ?: null);
+        }
 
         return redirect()->to('/keuangan')->with('success', 'Perjalanan telah diselesaikan dan dicatat di sistem keuangan.');
     }

@@ -44,6 +44,20 @@ $statusMap = [
     </div>
 </div>
 
+<!-- Quick action: email test -->
+<div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex items-center justify-between">
+    <div>
+        <p class="text-sm font-semibold text-gray-700">Uji Notifikasi Email</p>
+        <p class="text-xs text-gray-500">Kirim email test ke akun admin yang sedang login untuk cek konfigurasi SMTP.</p>
+    </div>
+    <form action="/admin/test-email" method="POST">
+        <?= csrf_field() ?>
+        <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition">
+            <i class="fas fa-paper-plane mr-1"></i> Kirim Email Test
+        </button>
+    </form>
+</div>
+
 <!-- Pending processing: approved_1 by direktur -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
     <div class="px-5 py-4 border-b border-gray-100 bg-blue-50 flex items-center justify-between">
