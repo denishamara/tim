@@ -15,7 +15,7 @@
  */
 
 if (! function_exists('sppd_get_notification_count')) {
-	function sppd_get_notification_count(\CodeIgniter\Database\BaseConnection $db, ?int $userId, string $role, array $statuses): int
+	function sppd_get_notification_count(\CodeIgniter\Database\BaseConnection $db, ?int $userId, string $role, array $statuses, ?string $seenAfter = null): int
 	{
 		if (empty($statuses)) {
 			return 0;
@@ -23,6 +23,10 @@ if (! function_exists('sppd_get_notification_count')) {
 
 		$builder = $db->table('perjalanan_dinas');
 		$builder->whereIn('status', $statuses);
+
+		if (! empty($seenAfter)) {
+			$builder->where('updated_at >', $seenAfter);
+		}
 
 		if ($role === 'pegawai' && $userId) {
 			$builder->where('user_id', $userId);
@@ -43,54 +47,75 @@ if (! function_exists('sppd_sidebar_notifications')) {
 		}
 
 		$db = \Config\Database::connect();
+
 		$items = [];
+		$itemDefs = [];
 
 		if ($role === 'pegawai') {
-			$items = [
+			$itemDefs = [
 				[
+					'key'   => 'pegawai_rejected',
 					'label' => 'Pengajuan Ditolak',
-					'count' => sppd_get_notification_count($db, $userId, $role, ['rejected_1', 'rejected_2']),
+					'statuses' => ['rejected_1', 'rejected_2'],
 					'href'  => '/pegawai',
 				],
 				[
+					'key'   => 'pegawai_waiting',
 					'label' => 'Menunggu Proses',
-					'count' => sppd_get_notification_count($db, $userId, $role, ['draft', 'approved_1', 'processed_admin', 'approved_2']),
+					'statuses' => ['draft', 'approved_1', 'processed_admin', 'approved_2'],
 					'href'  => '/pegawai',
 				],
 			];
+
 		} elseif ($role === 'admin') {
-			$items = [
+			$itemDefs = [
 				[
+					'key'   => 'admin_pending',
 					'label' => 'Perlu Dirinci',
-					'count' => sppd_get_notification_count($db, $userId, $role, ['approved_1']),
+					'statuses' => ['approved_1'],
 					'href'  => '/admin',
 				],
 			];
 		} elseif ($role === 'direktur') {
-			$items = [
+			$itemDefs = [
 				[
+					'key'   => 'direktur_trip',
 					'label' => 'Approve Perjalanan',
-					'count' => sppd_get_notification_count($db, $userId, $role, ['draft']),
+					'statuses' => ['draft'],
 					'href'  => '/direktur',
 				],
 				[
+					'key'   => 'direktur_rincian',
 					'label' => 'Approve Rincian',
-					'count' => sppd_get_notification_count($db, $userId, $role, ['processed_admin']),
+					'statuses' => ['processed_admin'],
 					'href'  => '/direktur',
 				],
 			];
 		} elseif ($role === 'keuangan') {
-			$items = [
+			$itemDefs = [
 				[
+					'key'   => 'keuangan_pending',
 					'label' => 'Menunggu Pencairan',
-					'count' => sppd_get_notification_count($db, $userId, $role, ['approved_2']),
+					'statuses' => ['approved_2'],
 					'href'  => '/keuangan',
 				],
 				[
+					'key'   => 'keuangan_done',
 					'label' => 'Selesai Dicatat',
-					'count' => sppd_get_notification_count($db, $userId, $role, ['completed']),
+					'statuses' => ['completed'],
 					'href'  => '/keuangan',
 				],
+			];
+		}
+
+		foreach ($itemDefs as $def) {
+			$count = sppd_get_notification_count($db, $userId, $role, $def['statuses']);
+
+			$items[] = [
+				'key'   => $def['key'],
+				'label' => $def['label'],
+				'count' => $count,
+				'href'  => $def['href'],
 			];
 		}
 

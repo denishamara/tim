@@ -66,7 +66,9 @@
                     <span class="flex items-center gap-3">
                     <i class="fas fa-list-alt w-5 text-center text-primary-300"></i> Perjalanan Saya
                     </span>
-                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full"><?= (int) ($notif['total'] ?? 0) ?></span>
+                    <?php if ((int) ($notif['total'] ?? 0) > 0): ?>
+                        <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full"><?= (int) ($notif['total'] ?? 0) ?></span>
+                    <?php endif; ?>
                 </a>
                 <a href="/pegawai/create" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all">
                     <i class="fas fa-plus-circle w-5 text-center text-primary-300"></i> Ajukan Perjalanan
@@ -78,7 +80,9 @@
                     <span class="flex items-center gap-3">
                     <i class="fas fa-tasks w-5 text-center text-primary-300"></i> Proses Pengajuan
                     </span>
-                    <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) (($notif['items'][0]['count'] ?? 0)) ?></span>
+                    <?php if ((int) ($notif['items'][0]['count'] ?? 0) > 0): ?>
+                        <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) ($notif['items'][0]['count'] ?? 0) ?></span>
+                    <?php endif; ?>
                 </a>
                 <a href="/admin/arsip" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all <?= str_contains(current_url(), '/arsip') ? 'active' : '' ?>">
                     <i class="fas fa-archive w-5 text-center text-primary-300"></i> Arsip Perjalanan
@@ -96,7 +100,9 @@
                     <span class="flex items-center gap-3">
                     <i class="fas fa-check-circle w-5 text-center text-primary-300"></i> Persetujuan
                     </span>
-                    <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) ($notif['total'] ?? 0) ?></span>
+                    <?php if ((int) ($notif['total'] ?? 0) > 0): ?>
+                        <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) ($notif['total'] ?? 0) ?></span>
+                    <?php endif; ?>
                 </a>
             <?php endif; ?>
 
@@ -105,7 +111,9 @@
                     <span class="flex items-center gap-3">
                     <i class="fas fa-wallet w-5 text-center text-primary-300"></i> Dana Operasional
                     </span>
-                    <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) (($notif['items'][0]['count'] ?? 0)) ?></span>
+                    <?php if ((int) ($notif['items'][0]['count'] ?? 0) > 0): ?>
+                        <span class="text-xs bg-yellow-300 text-yellow-900 px-2 py-0.5 rounded-full font-semibold"><?= (int) ($notif['items'][0]['count'] ?? 0) ?></span>
+                    <?php endif; ?>
                 </a>
             <?php endif; ?>
         </nav>
