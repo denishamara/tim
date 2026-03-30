@@ -203,6 +203,37 @@ class Admin extends BaseController
         return redirect()->to('/admin')->with('success', 'Perjalanan telah dikirim ke direktur untuk persetujuan rincian biaya.');
     }
 
+    public function markDanaDicairkan($id)
+    {
+        $perjalanan = $this->perjalananModel->find($id);
+        if (! $perjalanan || $perjalanan['status'] !== 'sent_finance') {
+            return redirect()->to('/admin')->with('error', 'Status tidak valid untuk pencairan dana.');
+        }
+
+        $catatan = trim((string) ($this->request->getPost('catatan') ?? ''));
+        if ($catatan === '') {
+            $catatan = 'Dana sudah dicairkan oleh admin.';
+        }
+
+        $this->perjalananModel->update($id, ['status' => 'completed']);
+
+        $this->logModel->insert([
+            'perjalanan_id' => $id,
+            'approved_by'   => session()->get('user_id'),
+            'role'          => 'admin',
+            'status'        => 'completed',
+            'catatan'       => $catatan,
+            'approved_at'   => date('Y-m-d H:i:s'),
+        ]);
+
+        $updatedPerjalanan = $this->perjalananModel->find($id);
+        if ($updatedPerjalanan) {
+            $this->notifEmail->kirimStatusPemohon($updatedPerjalanan, 'Dana Dicairkan', $catatan);
+        }
+
+        return redirect()->to('/admin')->with('success', 'Dana berhasil ditandai sudah dicairkan.');
+    }
+
     public function arsip()
     {
         $data['list']  = $this->perjalananModel->getByStatusWithUser(['draft', 'rejected_1', 'approved_1', 'processed_admin', 'approved_2', 'rejected_2', 'sent_finance', 'completed']);

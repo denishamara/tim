@@ -3,8 +3,9 @@
 
 <?php
 $statusMap = [
-    'approved_2' => ['label' => 'Menunggu Pencatatan', 'class' => 'bg-primary-100 text-primary-700'],
-    'completed'  => ['label' => 'Selesai Dicatat', 'class' => 'bg-primary-100 text-primary-800'],
+    'approved_2'   => ['label' => 'Perlu Persetujuan Keuangan', 'class' => 'bg-primary-100 text-primary-700'],
+    'sent_finance' => ['label' => 'Disetujui Keuangan', 'class' => 'bg-indigo-100 text-indigo-700'],
+    'completed'    => ['label' => 'Dana Sudah Cair', 'class' => 'bg-primary-100 text-primary-800'],
 ];
 ?>
 
@@ -12,7 +13,7 @@ $statusMap = [
 <div class="flex items-center justify-between mb-6">
     <div>
         <h1 class="text-2xl font-bold text-gray-800">Dashboard Keuangan</h1>
-        <p class="text-sm text-gray-500 mt-1">Kelola pencatatan dana operasional</p>
+        <p class="text-sm text-gray-500 mt-1">Setujui pengajuan dana sebelum dicairkan admin</p>
     </div>
     <a href="<?= site_url('keuangan/laporan') ?>" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition flex items-center gap-2">
         <i class="fas fa-chart-bar"></i>
@@ -28,7 +29,7 @@ $statusMap = [
         </div>
         <div>
             <p class="text-2xl font-bold text-gray-800"><?= count($pending) ?></p>
-            <p class="text-xs text-gray-500">Perlu Dicatat</p>
+            <p class="text-xs text-gray-500">Perlu Persetujuan</p>
         </div>
     </div>
     <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
@@ -38,14 +39,14 @@ $statusMap = [
         <div>
             <?php $totalDana = array_sum(array_column($completed, 'total_pengajuan')); ?>
             <p class="text-2xl font-bold text-gray-800"><?= count($completed) ?></p>
-            <p class="text-xs text-gray-500">Selesai Dicatat</p>
+            <p class="text-xs text-gray-500">Sudah Diproses</p>
         </div>
     </div>
 </div>
 
 <?php if ($totalDana > 0): ?>
 <div class="bg-gradient-to-r from-primary-700 to-primary-600 rounded-2xl p-5 mb-6 text-white shadow-lg">
-    <p class="text-primary-200 text-xs mb-1">Total Dana Operasional Tercatat</p>
+    <p class="text-primary-200 text-xs mb-1">Total Dana Operasional Diproses</p>
     <p class="text-3xl font-bold">Rp <?= number_format($totalDana, 0, ',', '.') ?></p>
 </div>
 <?php endif; ?>
@@ -55,14 +56,14 @@ $statusMap = [
     <div class="px-5 py-4 border-b border-primary-100 bg-primary-50 flex items-center justify-between">
         <div class="flex items-center gap-2">
             <div class="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></div>
-            <h4 class="font-semibold text-primary-700 text-sm">Dana Operasional Siap Dicatat</h4>
+            <h4 class="font-semibold text-primary-700 text-sm">Pengajuan Menunggu Persetujuan Keuangan</h4>
         </div>
         <span class="bg-primary-100 text-primary-700 px-2.5 py-1 rounded-full text-xs font-bold"><?= count($pending) ?></span>
     </div>
     <?php if (empty($pending)): ?>
         <div class="text-center py-10 text-gray-400 text-sm">
             <i class="fas fa-check-circle text-4xl text-gray-200 mb-2"></i>
-            <p>Tidak ada dana operasional yang perlu dicatat</p>
+            <p>Tidak ada pengajuan yang menunggu persetujuan keuangan</p>
         </div>
     <?php else: ?>
         <div class="divide-y divide-gray-50">
@@ -85,7 +86,7 @@ $statusMap = [
                     </a>
                     <button onclick="openCompleteModal(<?= $p['id'] ?>)"
                         class="px-4 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold transition">
-                        <i class="fas fa-check mr-1"></i> Catat Selesai
+                        <i class="fas fa-check mr-1"></i> Setujui Keuangan
                     </button>
                 </div>
             </div>
@@ -97,7 +98,7 @@ $statusMap = [
 <!-- Completed -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
-        <h4 class="font-semibold text-gray-700 text-sm">Riwayat Dana Operasional Selesai</h4>
+        <h4 class="font-semibold text-gray-700 text-sm">Riwayat Pengajuan Disetujui Keuangan / Selesai Dicairkan</h4>
     </div>
     <?php if (empty($completed)): ?>
         <div class="text-center py-8 text-gray-400 text-sm">Belum ada data selesai</div>
@@ -140,16 +141,16 @@ $statusMap = [
             <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
                 <i class="fas fa-check-circle text-primary-600"></i>
             </div>
-            <h4 class="font-bold text-gray-800">Konfirmasi Pencatatan</h4>
+            <h4 class="font-bold text-gray-800">Konfirmasi Persetujuan Keuangan</h4>
         </div>
-        <p class="text-sm text-gray-500 mb-4">Dana operasional akan dicatat sebagai selesai dalam sistem. Tambahkan catatan jika perlu.</p>
+        <p class="text-sm text-gray-500 mb-4">Pengajuan akan ditandai sudah disetujui keuangan dan menunggu admin menandai dana sudah cair.</p>
         <form id="completeForm" method="POST">
             <?= csrf_field() ?>
             <textarea name="catatan" rows="2" placeholder="Catatan keuangan (opsional)..."
                 class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none mb-4"></textarea>
             <div class="flex gap-3">
                 <button type="submit" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl text-sm font-semibold">
-                    <i class="fas fa-check mr-1"></i> Catat Selesai
+                    <i class="fas fa-check mr-1"></i> Setujui Keuangan
                 </button>
                 <button type="button" onclick="document.getElementById('completeModal').classList.add('hidden')"
                     class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-50">

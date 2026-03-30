@@ -75,6 +75,12 @@ if (! function_exists('sppd_sidebar_notifications')) {
 					'statuses' => ['approved_1'],
 					'href'  => '/admin',
 				],
+				[
+					'key'   => 'admin_cair',
+					'label' => 'Siap Dicairkan',
+					'statuses' => ['sent_finance'],
+					'href'  => '/admin',
+				],
 			];
 		} elseif ($role === 'direktur') {
 			$itemDefs = [
@@ -169,7 +175,9 @@ if (! function_exists('sppd_process_timeline')) {
 		$processed = $logByStatus['processed_admin'] ?? null;
 		$rejected2 = $logByStatus['rejected_2'] ?? null;
 		$approved2 = $logByStatus['approved_2'] ?? null;
+		$sentFinance = $logByStatus['sent_finance'] ?? null;
 		$completed = $logByStatus['completed'] ?? null;
+		$completedRole = strtolower((string) ($completed['role'] ?? ''));
 
 		$pegawaiName = (string) ($perjalanan['pegawai_name'] ?? 'Pegawai');
 
@@ -243,18 +251,39 @@ if (! function_exists('sppd_process_timeline')) {
 			];
 		}
 
+		if ($sentFinance || ($completed && $completedRole === 'keuangan')) {
+			$items[] = [
+				'label'  => 'Persetujuan Keuangan',
+				'state'  => 'done',
+				'detail' => $buildDetail($sentFinance ?: $completed, 'Pencairan dana disetujui bagian keuangan.'),
+				'time'   => $formatTime(($sentFinance ?: $completed)['approved_at'] ?? null),
+			];
+		} else {
+			$items[] = [
+				'label'  => 'Persetujuan Keuangan',
+				'state'  => 'pending',
+				'detail' => 'Menunggu persetujuan bagian keuangan.',
+				'time'   => '-',
+			];
+		}
+
 		if ($completed) {
 			$items[] = [
-				'label'  => 'Pencatatan Keuangan',
+				'label'  => $completedRole === 'admin' ? 'Dana Dicairkan Admin' : 'Pencatatan Keuangan',
 				'state'  => 'done',
-				'detail' => $buildDetail($completed, 'Dana operasional dicatat keuangan.'),
+				'detail' => $buildDetail(
+					$completed,
+					$completedRole === 'admin'
+						? 'Dana operasional telah dicairkan admin.'
+						: 'Dana operasional telah diproses keuangan (data lama).'
+				),
 				'time'   => $formatTime($completed['approved_at'] ?? null),
 			];
 		} else {
 			$items[] = [
-				'label'  => 'Pencatatan Keuangan',
+				'label'  => 'Dana Dicairkan Admin',
 				'state'  => 'pending',
-				'detail' => 'Belum dicatat bagian keuangan.',
+				'detail' => 'Menunggu admin menandai dana sudah cair.',
 				'time'   => '-',
 			];
 		}

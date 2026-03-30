@@ -64,25 +64,26 @@ class Keuangan extends BaseController
             return redirect()->to('/keuangan')->with('error', 'Status tidak valid.');
         }
 
-        $catatan = $this->request->getPost('catatan') ?? 'Dana operasional telah dicatat oleh bagian keuangan.';
+        $catatan = $this->request->getPost('catatan') ?? 'Pencairan dana telah disetujui bagian keuangan, menunggu konfirmasi admin.';
 
-        $this->perjalananModel->update($id, ['status' => 'completed']);
+        $this->perjalananModel->update($id, ['status' => 'sent_finance']);
 
         $this->logModel->insert([
             'perjalanan_id' => $id,
             'approved_by'   => session()->get('user_id'),
             'role'          => 'keuangan',
-            'status'        => 'completed',
+            'status'        => 'sent_finance',
             'catatan'       => $catatan,
             'approved_at'   => date('Y-m-d H:i:s'),
         ]);
 
         $updatedPerjalanan = $this->perjalananModel->find($id);
         if ($updatedPerjalanan) {
-            $this->notifEmail->kirimStatusPemohon($updatedPerjalanan, 'Selesai (Keuangan)', $catatan ?: null);
+            $this->notifEmail->kirimAksiRole('admin', $updatedPerjalanan, 'Konfirmasi Pencairan Dana', $catatan ?: null);
+            $this->notifEmail->kirimStatusPemohon($updatedPerjalanan, 'Disetujui Keuangan (Menunggu Konfirmasi Admin)', $catatan ?: null);
         }
 
-        return redirect()->to('/keuangan')->with('success', 'Perjalanan telah diselesaikan dan dicatat di sistem keuangan.');
+        return redirect()->to('/keuangan')->with('success', 'Pengajuan disetujui keuangan dan menunggu konfirmasi pencairan oleh admin.');
     }
 
     /**

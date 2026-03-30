@@ -41,6 +41,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('rincian/add/(:num)',           'Admin::addRincian/$1');
         $routes->get('rincian/delete/(:num)/(:num)',  'Admin::deleteRincian/$1/$2');
         $routes->post('submit/(:num)',                'Admin::submitToDirector/$1');
+        $routes->post('mark-dicairkan/(:num)',        'Admin::markDanaDicairkan/$1');
         $routes->get('arsip',                        'Admin::arsip');
         // Kendaraan
         $routes->get('kendaraan',                    'Admin::kendaraan');

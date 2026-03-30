@@ -407,6 +407,16 @@
             </button>
         </form>
         <?php endif; ?>
+
+        <?php if ($perjalanan['status'] === 'sent_finance'): ?>
+        <form action="/admin/mark-dicairkan/<?= $perjalanan['id'] ?>" method="POST"
+            onsubmit="return confirm('Tandai dana untuk perjalanan ini sudah dicairkan?')">
+            <?= csrf_field() ?>
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white font-semibold py-3 rounded-xl transition shadow">
+                <i class="fas fa-money-check-alt mr-2"></i> Tandai Dana Sudah Cair
+            </button>
+        </form>
+        <?php endif; ?>
     </div>
 
     <!-- Sidebar: dokumen + logs -->

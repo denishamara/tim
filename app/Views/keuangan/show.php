@@ -120,21 +120,27 @@
         <!-- Complete action -->
         <?php if ($perjalanan['status'] === 'approved_2'): ?>
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <h4 class="font-semibold text-gray-700 text-sm mb-3">Catat Dana Operasional</h4>
+            <h4 class="font-semibold text-gray-700 text-sm mb-3">Persetujuan Keuangan</h4>
             <form action="/keuangan/complete/<?= $perjalanan['id'] ?>" method="POST">
                 <?= csrf_field() ?>
                 <textarea name="catatan" rows="2" placeholder="Catatan keuangan (opsional)..."
                     class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none mb-3"></textarea>
-                <button type="submit" onclick="return confirm('Tandai sebagai selesai dicatat?')"
+                <button type="submit" onclick="return confirm('Setujui pengajuan ini dari sisi keuangan?')"
                     class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold transition">
-                    <i class="fas fa-check-circle mr-2"></i> Catat Dana Selesai
+                    <i class="fas fa-check-circle mr-2"></i> Setujui Keuangan
                 </button>
             </form>
+        </div>
+        <?php elseif ($perjalanan['status'] === 'sent_finance'): ?>
+        <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-5 text-center">
+            <i class="fas fa-hourglass-half text-3xl text-indigo-500 mb-2"></i>
+            <p class="font-semibold text-indigo-700">Sudah Disetujui Keuangan</p>
+            <p class="text-xs text-indigo-500 mt-1">Menunggu admin menandai dana sudah cair</p>
         </div>
         <?php elseif ($perjalanan['status'] === 'completed'): ?>
         <div class="bg-primary-50 border border-primary-200 rounded-2xl p-5 text-center">
             <i class="fas fa-check-circle text-3xl text-primary-500 mb-2"></i>
-            <p class="font-semibold text-primary-700">Dana Operasional Telah Dicatat</p>
+            <p class="font-semibold text-primary-700">Dana Sudah Dicairkan</p>
             <p class="text-xs text-primary-500 mt-1">Perjalanan dinas ini telah selesai diproses</p>
         </div>
         <?php endif; ?>

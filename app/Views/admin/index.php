@@ -8,6 +8,7 @@ $statusMap = [
     'rejected_1'      => ['label' => 'Ditolak', 'class' => 'bg-red-100 text-red-700'],
     'processed_admin' => ['label' => 'Di Direktur (Biaya)', 'class' => 'bg-purple-100 text-purple-700'],
     'approved_2'      => ['label' => 'Di Keuangan', 'class' => 'bg-primary-100 text-primary-700'],
+    'sent_finance'    => ['label' => 'Siap Dicairkan', 'class' => 'bg-indigo-100 text-indigo-700'],
     'rejected_2'      => ['label' => 'Biaya Ditolak', 'class' => 'bg-red-100 text-red-700'],
     'completed'       => ['label' => 'Selesai', 'class' => 'bg-primary-100 text-primary-800'],
 ];
@@ -138,7 +139,19 @@ $statusMap = [
                             <?= $p['total_pengajuan'] > 0 ? 'Rp ' . number_format($p['total_pengajuan'], 0, ',', '.') : '-' ?>
                         </td>
                         <td class="px-5 py-3">
-                            <a href="/admin/show/<?= $p['id'] ?>" class="text-primary-600 hover:text-primary-800 text-xs font-semibold">Detail</a>
+                            <div class="flex items-center gap-2 justify-end">
+                                <a href="/admin/show/<?= $p['id'] ?>" class="text-primary-600 hover:text-primary-800 text-xs font-semibold">Detail</a>
+                                <?php if ($p['status'] === 'sent_finance'): ?>
+                                    <form action="/admin/mark-dicairkan/<?= $p['id'] ?>" method="POST"
+                                        onsubmit="return confirm('Tandai dana untuk perjalanan ini sudah dicairkan?')">
+                                        <?= csrf_field() ?>
+                                        <button type="submit"
+                                            class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap">
+                                            Tandai Dicairkan
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
